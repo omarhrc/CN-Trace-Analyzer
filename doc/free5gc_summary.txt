@@ -1,0 +1,18 @@
+                                                                                                               mean_procedure_time_ms  min_procedure_time_ms  max_procedure_time_ms  count
+name                                                                                                                                                                                      
+HTTP GET /nudm-sdm/v1/smf-select-data                                                                                        8.684874               8.684874               8.684874      1
+HTTP GET /nudm-sdm/v1/ue-context-in-smf-data                                                                                11.763811              11.763811              11.763811      1
+HTTP GET /nudr-dr/v1/policy-data/ues/am-data                                                                                 4.590750               4.590750               4.590750      1
+HTTP GET /nudr-dr/v1/policy-data/ues/sm-data                                                                                 2.052784               2.052784               2.052784      1
+HTTP GET /nudr-dr/v1/subscription-data/authentication-data/authentication-subscription                                       2.615213               2.615213               2.615213      1
+HTTP GET /nudr-dr/v1/subscription-data/context-data/smf-registrations                                                        0.842571               0.842571               0.842571      1
+HTTP GET /nudr-dr/v1/subscription-data/provisioned-data/am-data                                                              0.856400               0.545740               1.167059      2
+HTTP GET /nudr-dr/v1/subscription-data/provisioned-data/sm-data                                                              1.064777               1.064777               1.064777      1
+HTTP GET /nudr-dr/v1/subscription-data/provisioned-data/smf-selection-subscription-data                                      0.962496               0.962496               0.962496      1
+HTTP POST /namf-comm/v1/subscriptions                                                                                        1.550436               1.550436               1.550436      1
+HTTP POST /namf-comm/v1/ue-contexts/n1-n2-messages                                                                           1.645565               1.645565               1.645565      1
+HTTP POST /nsmf-pdusession/v1/sm-contexts/urn:uuid:56763478-4032-4924-bbd5-35541af62ea0/modify                               2.180576               2.180576               2.180576      1
+HTTP POST /nudm-sdm/v1/sdm-subscriptions                                                                                     8.040190               8.040190               8.040190      1
+HTTP POST /nudr-dr/v1/subscription-data/context-data/sdm-subscriptions                                                       0.385046               0.385046               0.385046      1
+HTTP PUT /nudr-dr/v1/subscription-data/context-data/amf-3gpp-access                                                          1.298666               1.298666               1.298666      1
+HTTP PUT /nudr-dr/v1/subscription-data/suci-0-208-93-0-0-0-00007487/authentication-data/authentication-status                1.636744               1.636744               1.636744      1
