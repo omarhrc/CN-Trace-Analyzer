@@ -7,8 +7,8 @@ from lxml.etree import Element
 
 from parsing.common import xml2json
 
-nas_req_regex = re.compile(r"nas_5gs\..*message_type: '.*[Rr]equest.*'")
-nas_message_type_regex = re.compile(r"nas_5gs\..*message_type: 'Message [tT]ype: (.*)'")
+nas_req_regex = re.compile(r"nas-5gs\..*message_type: '.*[Rr]equest.*'")
+nas_message_type_regex = re.compile(r"nas-5gs\..*message_type: 'Message [tT]ype: (.*)'")
 ngap_message_type_regex = re.compile(r"ngap.procedureCode: 'procedureCode: id-(.*)'")
 
 

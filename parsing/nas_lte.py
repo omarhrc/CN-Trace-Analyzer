@@ -7,10 +7,40 @@ from lxml.etree import Element
 
 from parsing.common import xml2json
 
-nas_lte_req_regex = re.compile(r"nas-eps\..*message_type: '.*[Rr]equest.*'")
-nas_lte_message_type_regex = re.compile(r"nas-eps\..*message_type: 'Message [tT]ype: (.*)'")
+nas_lte_req_regex = re.compile(r"nas-eps\..*_type:.*[Rr]equest.*")
+nas_lte_message_type_regex = re.compile(r"nas-eps\..*_type:.*: (.*)")
 s1ap_message_type_regex = re.compile(r"s1ap.procedureCode: 'procedureCode: id-(.*)'")
 
+
+NAS_LTE_MESSAGES = ('Attach request (0x41)',
+                    'Attach accept (0x42)',
+                    'Attach reject (0x44)',
+                    'PDN connectivity request (0xd0)',
+                    'Activate default EPS bearer context request (0xc1)',
+                    'Activate default EPS bearer context accept (0xc2)',
+                    'Activate default EPS bearer context reject (0xc3)',
+                    'Activate dedicated EPS bearer context request (0xc5)',
+                    'Activate dedicated EPS bearer context accept (0xc6)',
+                    'Activate dedicated EPS bearer context reject (0xc7)'
+                    'Deactivate EPS bearer context request (0xcd)',
+                    'Dectivate EPS bearer context accept (0xce)', 
+                    'Deativate EPS bearer context reject (0xcf)'
+                    )
+
+NAS_MM_LTE_MESSAGES = ('Attach request (0x41)',
+                    'Attach accept (0x42)',
+                    'Attach reject (0x44)'
+                    )
+
+NAS_SM_LTE_MESSAGES = (
+                    'PDN connectivity request (0xd0)',
+                    'Activate default EPS bearer context request (0xc1)',
+                    'Activate default EPS bearer context accept (0xc2)',
+                    'Activate default EPS bearer context reject (0xc3)',
+                    'Activate dedicated EPS bearer context request (0xc5)',
+                    'Activate dedicated EPS bearer context accept (0xc6)',
+                    'Activate dedicated EPS bearer context reject (0xc7)'
+                    )
 
 def parse_lte_nas_proto_el(frame_number, el: Element, multipart_proto=False):
     if not multipart_proto:

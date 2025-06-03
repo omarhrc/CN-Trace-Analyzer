@@ -350,7 +350,7 @@ def packet_to_str(packet: PacketDescription, simple_diagrams=False, force_show_f
                                   not (x in s1ap_seen or s1ap_seen_add(x))]
 
         # Search NAS messages
-        nas_matches = nas_message_type_regex.finditer(packet.msg_description)
+        nas_matches = nas_lte_message_type_regex.finditer(packet.msg_description)
         nas_message_types = [nas_match.group(1) for nas_match in nas_matches if nas_match is not None]
         if len(nas_message_types) > 0:
             # Remove duplicates: https://stackoverflow.com/questions/480214/how-do-you-remove-duplicates-from-a-list-whilst-preserving-order

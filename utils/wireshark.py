@@ -603,7 +603,7 @@ def import_pdml(file_paths,
                 logging.debug(icmp)
             msg_description = icmp
         if packet_has_s1ap:
-            nas_request = parse_lte_nas_proto(frame_number, s1ap_proto)
+            nas_request = parse_lte_nas_proto(frame_number, s1ap_proto, True)
             if debug:
                 logging.debug('NAS_LTE')
                 logging.debug(nas_request)
@@ -1011,9 +1011,10 @@ def _generate_summary_row(x):
                 ['{0} {1}'.format(sbi_url_description.method, sbi_url_description.call) for sbi_url_description in
                  sbi_url_descriptions])
     elif protocol == 'S1AP':
-        summary = 'NAS-EPS ' + \
-                  summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').split(',')[
-                      -1].strip()
+        summary = 'NAS-EPS ' + summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').strip()
+#                  summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').split(',')[
+#                      -1].strip()
+    #              summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').strip()
     elif protocol == 'SIP':
         try:
             sip_req_match = sip_req_regex.search(summary_raw)
