@@ -23,7 +23,7 @@ NAS_LTE_MESSAGES = ('Attach request (0x41)',
                     'Activate dedicated EPS bearer context accept (0xc6)',
                     'Activate dedicated EPS bearer context reject (0xc7)'
                     'Deactivate EPS bearer context request (0xcd)',
-                    'Dectivate EPS bearer context accept (0xce)', 
+                    'Deactivate EPS bearer context accept (0xce)', 
                     'Deativate EPS bearer context reject (0xcf)'
                     )
 

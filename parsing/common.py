@@ -260,7 +260,7 @@ class ESMProcedureManager():
 #        for session in re.findall(self.nas_lte_sm_seq_regex, msg_description):
             before_sm_msg = msg_description[before_index:sm_msg_match.start()]
             sm_msg = sm_msg_match.group(1)
-            print(msg_description.find("Deactivate"), len(sm_msg)
+            print(msg_description.find("Deactivate"), sm_msg)
             sm_seq_match = re.search(self.nas_lte_sm_seq_regex, before_sm_msg)
             before_index = sm_msg_match.end()
             if sm_seq_match is None:
@@ -297,3 +297,4 @@ class ESMProcedureManager():
 
     def create_new_session_counter(self, initial_state=None):
          return ESMProcedureCounter(initial_state)
+     

@@ -15,7 +15,7 @@ import re
 
 from parsing import nas_lte
 from parsing.common import ProcedureCounter, ESMProcedureCounter, ESMProcedureManager
-from transitions import State, Transition
+#from transitions import State, Transition
 
 def parse_k8s_kpis_as_dataframe(filename):
     # Parses a KPI file consisting of several lines of raw KPIs as output by the following kubectl command
@@ -470,8 +470,10 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
     
     procedure_frames = pd.DataFrame()
     for nas_lte_msg in nas_lte.NAS_LTE_MESSAGES:
-        procedure_to_add_df = packets_df[packets_df['summary'].str.contains(nas_lte_msg, 
-                                                                         regex=False)]
+#        procedure_to_add_df = packets_df[packets_df['summary'].str.contains(nas_lte_msg, 
+#                                                                         regex=False)]
+        procedure_to_add_df = packets_df[packets_df['msg_description'].str.contains(nas_lte_msg, 
+                                                                         regex=False)]        
         procedure_frames = pd.concat([procedure_frames, procedure_to_add_df])
     procedure_frames.sort_values("datetime", inplace=True)
     procedure_frames.drop_duplicates(inplace=True)
@@ -569,7 +571,7 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
             
 ####        
 
-            esm_manager.process_esm_messages(row.msg_description, row.summary,                                                 
+            esm_manager.process_esm_messages(row.msg_description, row.msg_description,                                                 
                                                  timestamp=row.timestamp, 
                                                  frame=row.frame_number, date_time=row.datetime)
 
