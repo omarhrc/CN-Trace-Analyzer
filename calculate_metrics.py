@@ -9,6 +9,7 @@ import pandas as pd
 from parsing import json_parser
 import trace_visualizer
 import logging
+import os
 import os.path
 import plotly.graph_objects as go
 import bz2
@@ -20,15 +21,16 @@ import numpy as np
 import re
 
 import argparse
-import logging
-import os.path
 import platform
 import sys
+
+import glob
 
 import parsing.http
 from utils.files import add_folder_to_file_list
 from utils.plantuml import output_files_as_file, plant_uml_jar
 from utils.wireshark import import_pdml, call_wireshark
+from utils.wireshark import import_pcap_as_dataframe
 
 from parsing import nas_lte
 from parsing.common import ProcedureCounter, ESMProcedureCounter, ESMProcedureManager
@@ -38,27 +40,79 @@ application_logger.setLevel(logging.DEBUG)
 
 debug = False
 
-PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTPv2', 'Diameter', 'RADIUS', "GTP'", 'S1AP', 'SIP']
+PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP']
 
 
-def create_feature_vector(packets_df, logging_level=logging.INFO):
-    current_verbosity_level = application_logger.level
-    application_logger.setLevel(logging_level)
+def create_protocol_features(packets_df, protocol):
+    ''' Calculates features for each protocol '''
+    total_duration = packets_df['timestamp'].max() - packets_df['timestamp'].min()
+    if total_duration == 0:
+        return None
+    protocol_packets = packets_df[packets_df['protocol'].str.contains(protocol)]
+    # Feature 1 - TPS
+    transactions_per_second = len(protocol_packets)/total_duration
+    feature_names = ['tps']
+    protocol_feature_names = [f'{protocol}_{feature}' for feature in feature_names]
+    feature_values = [transactions_per_second]
+    return dict(zip(protocol_feature_names, feature_values))
+
     
+def create_feature_vector(packets_df):
+    feature_vector = dict()
     for protocol in PROTOCOLS:
-        protocol_packets = packets_df[packets_df['protocol'].str.contains(protocol)]
-        create_protocol_features(protocol_packets)
- 
-#    logging.debug('Parsed {0} procedures'.format(len(procedure_df)))
-    trace_visualizer.application_logger.setLevel(current_verbosity_level)
+        feature_vector.update(create_protocol_features(packets_df, protocol))
+    return feature_vector
 
-def create_protocol_features(protocol_df, protocol, logging_level=logging.INFO):
-    current_verbosity_level = application_logger.level
-    application_logger.setLevel(logging_level)
+
+def create_feature_vector_from_file(file_path):
+    ''' Converts one pcap file into a vector '''
+    packets_df = import_pcap_as_dataframe(
+        file_path,
+        http2_ports = "32445,5002,5000,32665,80,32077,5006,8080,3000,8081,29502,37904",
+        wireshark_version = 'OS',
+        platform=platform.system(),
+        logging_level=logging.INFO,
+        remove_pdml=False)
     
- 
-#    logging.debug('Parsed {0} procedures'.format(len(procedure_df)))
-    trace_visualizer.application_logger.setLevel(current_verbosity_level)        
+    if len(packets_df) == 0:
+        return None
+    vector = create_feature_vector(packets_df)
+    return vector
+    
+
+def create_vectors_from_traces(directory_path, pattern="**.pcap*"):
+    """
+    Iterates over files in a specified Windows directory matching a pattern.
+    Can be recursive if pattern includes '**' and recursive=True.
+
+    Args:
+        directory_path (str): The base path to start searching.
+        pattern (str): The file pattern to match (e.g., '*.txt', '**.pdf' for recursive).
+    """
+    if not os.path.isdir(directory_path):
+        print(f"Error: Directory not found at '{directory_path}'")
+        return
+
+    full_pattern_path = os.path.join(directory_path, pattern)
+    print(f"Files matching '{full_pattern_path}':")
+
+    # Use recursive=True if your pattern contains '**' to search subdirectories
+    is_recursive_search = '**' in pattern
+    result = list()
+    try:
+        for file_path in glob.glob(full_pattern_path, recursive=is_recursive_search):
+            if os.path.isfile(file_path): # Ensure it's a file, not a directory if '**' is used
+                print(f"  File: {file_path}")
+                # Perform operations on the file
+                vector = create_feature_vector_from_file(file_path)
+                if vector is not None:
+                    vector.update({'file_path':file_path})
+                    result.append(vector)
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    result_df = pd.DataFrame(result)
+    return result_df
+
 
 
 def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
