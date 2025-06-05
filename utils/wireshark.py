@@ -475,8 +475,11 @@ def import_pdml(file_paths,
            s1ap_proto = s1ap_proto[0]
 
         # SIP & IMS
-        sip_proto = packet.find("proto[@name='sip']")      
-
+        sip_proto = packet.find("proto[@name='sip']")   
+        try:
+            sdp_proto = packet.find(".//proto[@name='sdp']")      
+        except:
+            sdp_proto = None
         packet_has_http2 = False
         packet_has_ngap = False
         packet_has_pfcp = False
@@ -491,6 +494,7 @@ def import_pdml(file_paths,
         packet_has_s1ap = False
         
         packet_has_sip = False
+        packet_has_sdp = False
         
         protocols = []
         if ngap_proto is not None:
@@ -531,6 +535,9 @@ def import_pdml(file_paths,
         if sip_proto is not None:
             packet_has_sip = True
             protocols.append('SIP')
+        if sdp_proto is not None:
+            packet_has_sdp = True
+            protocols.append('SDP')
         if len(protocols) == 0:
             protocols_str = ''
         else:
@@ -612,6 +619,12 @@ def import_pdml(file_paths,
             sip_msg = parse_sip_proto(frame_number, sip_proto)
             if debug:
                 logging.debug('SIP')
+                logging.debug(sip_msg)
+            msg_description = sip_msg
+        if packet_has_sdp:
+            sip_msg = parse_sip_proto(frame_number, sip_proto)
+            if debug:
+                logging.debug('SDP')
                 logging.debug(sip_msg)
             msg_description = sip_msg
 

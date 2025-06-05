@@ -40,7 +40,7 @@ application_logger.setLevel(logging.DEBUG)
 
 debug = False
 
-PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP']
+PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP', 'SDP']
 
 
 def create_protocol_features(packets_df, protocol):

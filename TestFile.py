@@ -16,13 +16,12 @@ import platform
 #wireshark_trace = 'D:\\Temp\\free5gc.pcap'
 #wireshark_trace = 'D:\\Temp\\volte_calls_2.pcapng'
 #wireshark_trace = 'D:\\Temp\\s1ap_volte.pcapng'
-#wireshark_trace = 'D:\\Temp\\SIP MT offnet.pcap'
-wireshark_trace = 'D:\\Temp\\registration_open5gs.pcapng'
+wireshark_trace = 'D:\\Temp\\SIP MT offnet.pcap'
+#wireshark_trace = 'D:\\Temp\\registration_open5gs.pcapng'
 #wireshark_trace = 'D:\\Temp\\EPC_dedicated_bearers.pcapng'
 
 file_directory = 'D:\\Temp\\'
 
-# DEBUG loggig level for big traces so that you can see if processing is stuck or not
 # packets_df = import_pcap_as_dataframe(
 #     wireshark_trace,
 #     http2_ports = "32445,5002,5000,32665,80,32077,5006,8080,3000,8081,29502,37904",
