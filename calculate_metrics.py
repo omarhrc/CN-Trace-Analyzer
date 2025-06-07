@@ -33,7 +33,8 @@ from utils.wireshark import import_pdml, call_wireshark
 from utils.wireshark import import_pcap_as_dataframe
 
 from parsing import nas_lte
-from parsing.common import ProcedureCounter, ESMProcedureCounter, ESMProcedureManager
+from parsing.common import ProcedureMeasurement
+from parsing.s1ap_measurements import ESMProcedureManager, EMMProcedureManager
 
 application_logger = logging.getLogger()
 application_logger.setLevel(logging.DEBUG)
@@ -43,9 +44,8 @@ debug = False
 PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP', 'SDP']
 
 
-def create_protocol_features(packets_df, protocol):
+def create_protocol_features(packets_df, protocol, total_duration):
     ''' Calculates features for each protocol '''
-    total_duration = packets_df['timestamp'].max() - packets_df['timestamp'].min()
     if total_duration == 0:
         return None
     protocol_packets = packets_df[packets_df['protocol'].str.contains(protocol)]
@@ -59,8 +59,10 @@ def create_protocol_features(packets_df, protocol):
     
 def create_feature_vector(packets_df):
     feature_vector = dict()
+    total_duration = packets_df['timestamp'].max() - packets_df['timestamp'].min()
     for protocol in PROTOCOLS:
-        feature_vector.update(create_protocol_features(packets_df, protocol))
+        feature_vector.update(create_protocol_features(packets_df, protocol, total_duration))
+    feature_vector.update({"total_duration":total_duration})
     return feature_vector
 
 
@@ -72,7 +74,7 @@ def create_feature_vector_from_file(file_path):
         wireshark_version = 'OS',
         platform=platform.system(),
         logging_level=logging.INFO,
-        remove_pdml=False)
+        remove_pdml=True)
     
     if len(packets_df) == 0:
         return None
@@ -118,13 +120,10 @@ def create_vectors_from_traces(directory_path, pattern="**.pcap*"):
 def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
     current_verbosity_level = trace_visualizer.application_logger.level
     trace_visualizer.application_logger.setLevel(logging_level)
-
     
     procedure_frames = pd.DataFrame()
     for nas_lte_msg in nas_lte.NAS_LTE_MESSAGES:
-#        procedure_to_add_df = packets_df[packets_df['summary'].str.contains(nas_lte_msg, 
-#                                                                         regex=False)]
-        procedure_to_add_df = packets_df[packets_df['msg_description'].str.contains(nas_lte_msg, 
+        procedure_to_add_df = packets_df[packets_df['msg_description'].str.contains(nas_lte_msg,
                                                                          regex=False)]        
         procedure_frames = pd.concat([procedure_frames, procedure_to_add_df])
     procedure_frames.sort_values("datetime", inplace=True)
@@ -166,24 +165,8 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
         'name ENB_UE_S1AP_ID length_ms start_frame end_frame start_timestamp end_timestamp start_datetime end_datetime')
 
     logging.debug('Parsing procedures based on ENB_UE_S1AP_ID')
-#####################
 
-    emm_states = ['emm_deregistered_initial', 'waiting', 'emm_registered', 'emm_deregistered_failed']
-    
-    emm_attach_counter = ProcedureCounter('Attach')
-    emm_attach_counter.add_states(emm_states, ignore_invalid_triggers=True)
-    emm_attach_counter.add_transition('Attach request (0x41)', 'emm_deregistered_initial', 'waiting', after='start_procedure_measurement')
-    emm_attach_counter.add_transition('Attach accept (0x42)', 'waiting', 'emm_registered', after='end_procedure_measurement')
-    emm_attach_counter.add_transition('Attach reject (0x44)', 'waiting', 'emm_deregistered_failed', after='end_procedure_measurement')
-    emm_attach_counter.reset_measurement('emm_deregistered_initial')
-
-    esm_states = ['esm_pdn_initial', 'waiting', 'default_bearer_initial', 'dedicated_bearer_initial',
-                  'accept', 'reject']
-    
-    esm_pdn_connectivity = ESMProcedureCounter()
-    esm_pdn_connectivity.reset_measurement('esm_pdn_initial')
-    
-    
+    emm_manager = EMMProcedureManager()
     esm_manager = ESMProcedureManager()
 
 ####################
@@ -205,29 +188,13 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
 
         # display(rows)
         for row in rows.itertuples():
-#########
-            emm_attach_counter.check_and_trigger(row.summary,                                                 
-                                                 timestamp=row.timestamp, 
+            emm_manager.process_emm_messages(row.summary,
+                                                 timestamp=row.timestamp,
                                                  frame=row.frame_number, date_time=row.datetime)
-            emm_attach_counters = emm_attach_counter.get_all_counters()
-#            if emm_attach_counter.is_measurement_finished():
-#                emm_attach_procedure_time = emm_attach_counter.get_measurement()
-#                emm_attach_counter.reset_measurement('emm_deregistered_initial')
-#########
-            esm_pdn_connectivity.check_and_trigger(row.summary,                                                 
-                                                 timestamp=row.timestamp, 
-                                                 frame=row.frame_number, date_time=row.datetime)
-            
-            esm_pdn_connectivity_counters = esm_pdn_connectivity.get_all_counters()
-                # measurement not reset because the counter keeps state
-            
-####        
-
             esm_manager.process_esm_messages(row.msg_description, row.msg_description,                                                 
                                                  timestamp=row.timestamp, 
                                                  frame=row.frame_number, date_time=row.datetime)
-
-####    
+####
             # Mobility Management
             if 'Attach request (0x41)' in row.summary:
                 current_reg_start = row.timestamp
@@ -318,11 +285,19 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
                     current_eps_dedicated_bearer_establishment_start_frame,
                     row.frame_number,
                     current_eps_dedicated_bearer_establishment_start, row.timestamp,
-                    current_eps_dedicated_bearer_establishment_start_datetime, row.datetime))                
+                    current_eps_dedicated_bearer_establishment_start_datetime, row.datetime))
 
-    procedure_df = pd.DataFrame(procedures, columns=['name', 'ENB_UE_S1AP_ID', 'length_ms', 'start_frame', 'end_frame',
-                                                     'start_timestamp', 'end_timestamp',
-                                                     'start_datetime', 'end_datetime'])
+    output_columns = ['ENB_UE_S1AP_ID', 'name', 'length_ms', 'start_frame', 'end_frame',
+               'start_timestamp', 'end_timestamp',
+               'start_datetime', 'end_datetime']
+
+    procedure_df = pd.DataFrame(columns=output_columns)
+    for description_list in emm_manager.procedure_counters.values():
+        procedure_df = pd.concat([procedure_df, pd.DataFrame(description_list, columns=output_columns)],
+                                 ignore_index=True)
+    for description_list in esm_manager.procedure_counters.values():
+        procedure_df = pd.concat([procedure_df, pd.DataFrame(description_list, columns=output_columns)],
+                                 ignore_index=True)
 
     logging.debug('Parsed {0} procedures'.format(len(procedure_df)))
     trace_visualizer.application_logger.setLevel(current_verbosity_level)

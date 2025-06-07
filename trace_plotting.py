@@ -14,8 +14,7 @@ import numpy as np
 import re
 
 from parsing import nas_lte
-from parsing.common import ProcedureCounter, ESMProcedureCounter, ESMProcedureManager
-#from transitions import State, Transition
+
 
 def parse_k8s_kpis_as_dataframe(filename):
     # Parses a KPI file consisting of several lines of raw KPIs as output by the following kubectl command

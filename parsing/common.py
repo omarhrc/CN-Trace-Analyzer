@@ -113,19 +113,20 @@ class PacketType(Enum):
     CUSTOM = 3
 
     
-class ProcedureCounter(Machine):
-    ''' Base class to keep procedure counters
+class ProcedureMeasurement(Machine):
+    ''' Base class to keep procedure measurement
         state transitions based on received messages
     '''
     def __init__(self, procedure_name=None, 
-                 states=None, transitions=None):
-        
+                 states=None, transitions=None, initial_state=None):
         ''' class init '''
         Machine.__init__(self)
         self.initialize_state_machine(states, transitions)
         self.procedure_name = procedure_name
         self.reset_measurement()
         self.procedure_counters = defaultdict(list)
+        if initial_state:
+            self.set_state(initial_state)        
 
     def initialize_state_machine(self, states, transitions):
         if states and transitions:
@@ -168,7 +169,7 @@ class ProcedureCounter(Machine):
     def get_measurement(self):
         procedure_time = (self.outcome.timestamp - self.start_message.timestamp) * 1000
         return ProcedureDescription(key=None, 
-                                    procedure=self.outcome.counter_name, 
+                                    procedure=self.procedure_name, 
                                     length_ms=procedure_time, 
                                     start_frame=self.start_message.frame, 
                                     end_frame=self.outcome.frame, 
@@ -189,112 +190,3 @@ class ProcedureCounter(Machine):
         return self.procedure_counters
 
 
-class ESMProcedureCounter(ProcedureCounter):
-    ''' Implements multiple PDN counters '''
-    esm_states = ['esm_pdn_initial', 'waiting', 'esm_pdn_fail', 'default_bearer_initial',
-                  'default_bearer_established', 'default_bearer_failed', 'default_bearer_reject',
-                  'waiting_dedicated']
-
-    esm_transitions = [
-        ['PDN connectivity request (0xd0)', 'esm_pdn_initial', 'waiting', None, None, None, 'start_procedure_measurement'],
-#        ['PDN connectivity request (0xd0)', 'default_bearer_established', 'waiting', None, None, None, 'start_procedure_measurement'],
-        ['PDN connectivity reject (0xd1)', 'waiting', 'esm_pdn_fail', None, None, None, 'end_procedure_measurement'],
-        ['Activate default EPS bearer context request (0xc1)', 'waiting', 'default_bearer_initial', None, None, None, 'register_pdn_accept'],
-        ['Activate default EPS bearer context request (0xc1)', 'default_bearer_established', 'default_bearer_initial', None, None, None, 'start_procedure_measurement'],
-        ['Activate default EPS bearer context accept (0xc2)', 'default_bearer_initial', 'default_bearer_established', None, None, None, 'end_procedure_measurement'],
-        ['Activate default EPS bearer context reject (0xc3)', 'default_bearer_initial', 'default_bearer_reject', None, None, None, 'end_procedure_measurement'],
-        ['Activate dedicated EPS bearer context request (0xc5)', 'default_bearer_established', 'waiting_dedicated', None, None, None, 'start_procedure_measurement'],
-        ['Activate dedicated EPS bearer context accept (0xc6)', 'waiting_dedicated', 'default_bearer_established', None, None, None, 'end_procedure_measurement'],
-        ['Activate dedicated EPS bearer context reject (0xc7)', 'waiting_dedicated', 'default_bearer_established', None, None, None, 'end_procedure_measurement'],
-        ['Deactivate EPS bearer context request (0xcd)', 'default_bearer_established', 'waiting_dedicated', None, None, None, 'start_procedure_measurement'],
-        ['Dectivate EPS bearer context accept (0xce)', 'waiting_dedicated', 'default_bearer_established', None, None, None, 'end_procedure_measurement'],
-        ['Deativate EPS bearer context reject (0xcf)', 'waiting_dedicated', 'default_bearer_established', None, None, None, 'end_procedure_measurement']
-    ]                    
-
-
-    def initialize_state_machine(self, states, transitions):
-        self.add_states(states)
-        self.add_transitions(transitions)
-
-    def __init__(self, initial_state=None):
-        ProcedureCounter.__init__(self,
-                                  states=self.esm_states,
-                                  transitions=self.esm_transitions)
-        if initial_state:
-            self.set_state(initial_state)
-
-            
-    def register_pdn_accept(self, **kwargs):
-        # Register PDN connectivity request duration and outcome
-        ProcedureCounter.end_procedure_measurement(self, append_measurement=False, **kwargs)
-        self.procedure_counters['PDN connectivity accept'].append(self.get_measurement())
-        # Start default bearer establishment measurement
-        self.start_procedure_measurement(**kwargs)
-
-#    def end_procedure_measurement(self, **kwargs):
-#        ProcedureCounter.end_procedure_measurement(self, **kwargs)
-#        # Save counter
-#        self.procedure_counters[kwargs['counter_name']].append(self.get_measurement())
-
-class ESMProcedureManager():
-    ''' Manages esm sessions  and processes all messages'''
-    def __init__(self):
-         self.sessions = dict()
-         self.nas_lte_sm_seq_regex = re.compile(r"nas-eps.seq_no:.*Sequence number: (.*)'")
-#         nas-eps.seq_no: 'Sequence number: 2
-         self.nas_lte_sm_msg_regex = re.compile(r"nas-eps\..*_type:.*NAS EPS session management messages: (.*)'")
-#         self.previous_msg = None
-         self.previous_session = None
-         self.procedure_counters = defaultdict(list)
-
-         
-#    def define_no_session_messages(self, messages=None):
-#        ''' Defines which messages do not take into account session.
-#            These will apply to the lastest known session'''
-#        self.messages_with_no_session = messages
-        
-    def process_esm_messages(self, msg_description, row_summary, **kwargs):
-        ''' Loops over current message '''
-        before_index = 0
-        for sm_msg_match in re.finditer(self.nas_lte_sm_msg_regex, msg_description):
-#        for session in re.findall(self.nas_lte_sm_seq_regex, msg_description):
-            before_sm_msg = msg_description[before_index:sm_msg_match.start()]
-            sm_msg = sm_msg_match.group(1)
-            print(msg_description.find("Deactivate"), sm_msg)
-            sm_seq_match = re.search(self.nas_lte_sm_seq_regex, before_sm_msg)
-            before_index = sm_msg_match.end()
-            if sm_seq_match is None:
-                session = "dummy" #Dummy session value
-            else:
-                session = sm_seq_match.group(1)
-            if self.previous_session is None:
-                self.previous_session = session
-                self.sessions[session] = self.create_new_session_counter('esm_pdn_initial')
-            try:
-                counter_to_update = self.sessions[session]
-            except KeyError:
-                if self.previous_session == "dummy":
-                    # Update session index but keep the counter
-                    counter_to_update= self.sessions["dummy"]
-                    self.sessions[session] = counter_to_update
-                    self.sessions.pop("dummy")
-                else:
-#                previous_state = self.sessions[self.previous_session].state
-                    counter_to_update = self.sessions[session] = self.create_new_session_counter('default_bearer_established')
-#            self.previous_msg = sm_msg
-            self.previous_session = session
-            counter_to_update.check_and_trigger(sm_msg, **kwargs)
-        # Update own counters and cleanup
-        sessions_to_delete = set()
-        for session, counter in self.sessions.items():
-            if counter.is_measurement_finished():
-                sessions_to_delete.add(session)
-                for procedure, description_list in counter.get_all_counters().items():
-                    self.procedure_counters[procedure].extend(description_list)
-        for session in sessions_to_delete: 
-            self.sessions.pop(session)
-            
-
-    def create_new_session_counter(self, initial_state=None):
-         return ESMProcedureCounter(initial_state)
-     

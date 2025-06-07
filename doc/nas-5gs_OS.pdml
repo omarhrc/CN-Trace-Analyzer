@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="pdml2html.xsl"?>
+<!-- You can find pdml2html.xsl in C:\Program Files\Wireshark or at https://gitlab.com/wireshark/wireshark/-/tree/master/resources/share/doc/wireshark/pdml2html.xsl. -->
+<pdml version="0" creator="wireshark/4.4.6" time="Thu Jun  5 10:14:08 2025" capture_file=".\doc\nas-5gs.pcapng">
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="91">
+    <field name="num" pos="0" show="1" showname="Number" value="1" size="91"/>
+    <field name="len" pos="0" show="91" showname="Frame Length" value="5b" size="91"/>
+    <field name="caplen" pos="0" show="91" showname="Captured Length" value="5b" size="91"/>
+    <field name="timestamp" pos="0" show="Apr 22, 2024 05:29:42.000001000 W. Europe Daylight Time" showname="Captured Time" value="1713756582.000001000" size="91"/>
+  </proto>
+  <proto name="frame" showname="Frame 1: 91 bytes on wire (728 bits), 91 bytes captured (728 bits) on interface Fake IF, text2pcap, id 0" size="91" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="exported_pdu" showname="EXPORTED_PDU" size="15" pos="0">
+    <field name="filtered" value="exported_pdu" />
+  </proto>
+  <proto name="nas-5gs" showname="Non-Access-Stratum 5GS (NAS)PDU" size="76" pos="15">
+    <field name="filtered" value="nas-5gs" />
+  </proto>
+</packet>
+
+
+</pdml>

@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="pdml2html.xsl"?>
+<!-- You can find pdml2html.xsl in C:\Program Files\Wireshark or at https://gitlab.com/wireshark/wireshark/-/tree/master/resources/share/doc/wireshark/pdml2html.xsl. -->
+<pdml version="0" creator="wireshark/4.4.6" time="Thu Jun  5 10:14:09 2025" capture_file=".\doc\registration_open5gs.pcapng">
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="136">
+    <field name="num" pos="0" show="1" showname="Number" value="1" size="136"/>
+    <field name="len" pos="0" show="136" showname="Frame Length" value="88" size="136"/>
+    <field name="caplen" pos="0" show="136" showname="Captured Length" value="88" size="136"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:23.631686561 W. Europe Daylight Time" showname="Captured Time" value="1620368363.631686561" size="136"/>
+  </proto>
+  <proto name="frame" showname="Frame 1: 136 bytes on wire (1088 bits), 136 bytes captured (1088 bits) on interface any, id 0" size="136" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.1, Dst: 127.0.0.5" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 39582 (39582), Dst Port: 38412 (38412)" size="28" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (NGSetupRequest)" size="69" pos="64">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="64" show="False" value="0" unmaskedvalue="00"/>
+    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="64" show="0" value="00"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: initiatingMessage (0)" size="69" pos="64" show="0" value="00150041000004001b00090009f1075000000001005240170a00554552414e53494d2d676e622d3930312d37302d310066000d00000000010009f107000000080015400140">
+      <field name="ngap.initiatingMessage_element" showname="initiatingMessage" size="69" pos="64" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-NGSetup (21)" size="1" pos="65" show="21" value="15"/>
+        <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="66" show="0" value="00"/>
+        <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="66" show="0" value="00"/>
+        <field name="per.open_type_length" showname="Open Type Length: 65" hide="yes" size="1" pos="67" show="65" value="41"/>
+        <field name="ngap.value_element" showname="value" size="65" pos="68" show="" value="">
+          <field name="ngap.NGSetupRequest_element" showname="NGSetupRequest" size="65" pos="68" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="68" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 4" hide="yes" size="2" pos="69" show="4" value="0004"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 4 items" size="62" pos="71" show="4" value="001b00090009f1075000000001005240170a00554552414e53494d2d676e622d3930312d37302d310066000d00000000010009f107000000080015400140">
+              <field name="" show="Item 0: id-GlobalRANNodeID" size="13" pos="71" value="001b00090009f1075000000001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="13" pos="71" show="" value="">
+                  <field name="ngap.id" showname="id: id-GlobalRANNodeID (27)" size="2" pos="71" show="27" value="001b"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="73" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="73" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 9" hide="yes" size="1" pos="74" show="9" value="09"/>
+                  <field name="ngap.value_element" showname="value" size="9" pos="75" show="" value="">
+                    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="75" show="0" value="00"/>
+                    <field name="ngap.GlobalRANNodeID" showname="GlobalRANNodeID: globalGNB-ID (0)" size="9" pos="75" show="0" value="0009f1075000000001">
+                      <field name="ngap.globalGNB_ID_element" showname="globalGNB-ID" size="9" pos="75" show="" value="">
+                        <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="75" show="False" value="0" unmaskedvalue="00"/>
+                        <field name="per.optional_field_bit" showname="...0 .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="75" show="False" value="0" unmaskedvalue="00"/>
+                        <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="76" show="09:f1:07" value="09f107">
+                          <field name="e212.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="76" show="901" value="09f1"/>
+                          <field name="e212.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="77" show="70" value="f107"/>
+                        </field>
+                        <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="79" show="0" value="50"/>
+                        <field name="ngap.globalGNB_ID.gNB_ID" showname="gNB-ID: gNB-ID (0)" size="5" pos="79" show="0" value="5000000001">
+                          <field name="per.bit_string_length" showname="Bit String Length: 32" hide="yes" size="1" pos="79" show="32" value="50"/>
+                          <field name="ngap.gNB_ID" showname="gNB-ID: 00000001 [bit length 32, 0000 0000  0000 0000  0000 0000  0000 0001 decimal value 1]" size="4" pos="80" show="00:00:00:01" value="00000001"/>
+                        </field>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-RANNodeName" size="27" pos="84" value="005240170a00554552414e53494d2d676e622d3930312d37302d31">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="27" pos="84" show="" value="">
+                  <field name="ngap.id" showname="id: id-RANNodeName (82)" size="2" pos="84" show="82" value="0052"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="86" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="86" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 23" hide="yes" size="1" pos="87" show="23" value="17"/>
+                  <field name="ngap.value_element" showname="value" size="23" pos="88" show="" value="">
+                    <field name="per.extension_present_bit" showname="0... .... Extension Present Bit: False" hide="yes" size="1" pos="88" show="False" value="0" unmaskedvalue="0a"/>
+                    <field name="per.octet_string_length" showname="Octet String Length: 21" hide="yes" size="1" pos="88" show="21" value="0a"/>
+                    <field name="ngap.RANNodeName" showname="RANNodeName: UERANSIM-gnb-901-70-1" size="21" pos="90" show="UERANSIM-gnb-901-70-1" value="554552414e53494d2d676e622d3930312d37302d31"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 2: id-SupportedTAList" size="17" pos="111" value="0066000d00000000010009f10700000008">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="17" pos="111" show="" value="">
+                  <field name="ngap.id" showname="id: id-SupportedTAList (102)" size="2" pos="111" show="102" value="0066"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="113" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="113" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 13" hide="yes" size="1" pos="114" show="13" value="0d"/>
+                  <field name="ngap.value_element" showname="value" size="13" pos="115" show="" value="">
+                    <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="1" pos="115" show="1" value="00"/>
+                    <field name="ngap.SupportedTAList" showname="SupportedTAList: 1 item" size="11" pos="116" show="1" value="000000010009f107000000">
+                      <field name="" show="Item 0" size="11" pos="116" value="000000010009f107000000">
+                        <field name="ngap.SupportedTAItem_element" showname="SupportedTAItem" size="11" pos="116" show="" value="">
+                          <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname=".0.. .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="ngap.tAC" showname="tAC: 1 (0x000001)" size="3" pos="117" show="1" value="000001"/>
+                          <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="1" pos="120" show="1" value="00"/>
+                          <field name="ngap.broadcastPLMNList" showname="broadcastPLMNList: 1 item" size="7" pos="120" show="1" value="0009f107000000">
+                            <field name="" show="Item 0" size="7" pos="120" value="0009f107000000">
+                              <field name="ngap.BroadcastPLMNItem_element" showname="BroadcastPLMNItem" size="7" pos="120" show="" value="">
+                                <field name="per.extension_bit" showname=".... 0... Extension Bit: False" hide="yes" size="1" pos="120" show="False" value="0" unmaskedvalue="00"/>
+                                <field name="per.optional_field_bit" showname=".... .0.. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="120" show="False" value="0" unmaskedvalue="00"/>
+                                <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="121" show="09:f1:07" value="09f107">
+                                  <field name="e212.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="121" show="901" value="09f1"/>
+                                  <field name="e212.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="122" show="70" value="f107"/>
+                                </field>
+                                <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="2" pos="124" show="1" value="0000"/>
+                                <field name="ngap.tAISliceSupportList" showname="tAISliceSupportList: 1 item" size="1" pos="126" show="1" value="00">
+                                  <field name="" show="Item 0" size="1" pos="126" value="00">
+                                    <field name="ngap.SliceSupportItem_element" showname="SliceSupportItem" size="1" pos="126" show="" value="">
+                                      <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="126" show="False" value="0" unmaskedvalue="00"/>
+                                      <field name="per.optional_field_bit" showname=".0.. .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="126" show="False" value="0" unmaskedvalue="00"/>
+                                      <field name="ngap.s_NSSAI_element" showname="s-NSSAI" size="1" pos="126" show="" value="">
+                                        <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="126" show="False" value="0" unmaskedvalue="00"/>
+                                        <field name="per.optional_field_bit" showname="...0 .... Optional Field Bit: False (sD is NOT present)" hide="yes" size="1" pos="126" show="False" value="0" unmaskedvalue="00"/>
+                                        <field name="per.optional_field_bit" showname=".... 0... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="126" show="False" value="0" unmaskedvalue="00"/>
+                                        <field name="ngap.sST" showname="sST: 01" size="1" pos="126" show="01" value="01"/>
+                                      </field>
+                                    </field>
+                                  </field>
+                                </field>
+                              </field>
+                            </field>
+                          </field>
+                        </field>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 3: id-DefaultPagingDRX" size="5" pos="128" value="0015400140">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="5" pos="128" show="" value="">
+                  <field name="ngap.id" showname="id: id-DefaultPagingDRX (21)" size="2" pos="128" show="21" value="0015"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="130" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="130" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 1" hide="yes" size="1" pos="131" show="1" value="01"/>
+                  <field name="ngap.value_element" showname="value" size="1" pos="132" show="" value="">
+                    <field name="per.extension_present_bit" showname="0... .... Extension Present Bit: False" hide="yes" size="1" pos="132" show="False" value="0" unmaskedvalue="40"/>
+                    <field name="per.enum_index" showname="Enumerated Index: 2" hide="yes" size="1" pos="132" show="2" value="40"/>
+                    <field name="ngap.PagingDRX" showname="PagingDRX: v128 (2)" size="1" pos="132" show="2" value="40"/>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="120">
+    <field name="num" pos="0" show="2" showname="Number" value="2" size="120"/>
+    <field name="len" pos="0" show="120" showname="Frame Length" value="78" size="120"/>
+    <field name="caplen" pos="0" show="120" showname="Captured Length" value="78" size="120"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:23.631817387 W. Europe Daylight Time" showname="Captured Time" value="1620368363.631817387" size="120"/>
+  </proto>
+  <proto name="frame" showname="Frame 2: 120 bytes on wire (960 bits), 120 bytes captured (960 bits) on interface any, id 0" size="120" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.5, Dst: 127.0.0.1" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 38412 (38412), Dst Port: 39582 (39582)" size="28" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (NGSetupResponse)" size="54" pos="64">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="64" show="False" value="0" unmaskedvalue="20"/>
+    <field name="per.choice_index" showname="Choice Index: 1" hide="yes" size="1" pos="64" show="1" value="20"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: successfulOutcome (1)" size="54" pos="64" show="1" value="201500320000040001000e05806f70656e3567732d616d663000600008000009f10702004000564001ff005000080009f10700000008">
+      <field name="ngap.successfulOutcome_element" showname="successfulOutcome" size="54" pos="64" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-NGSetup (21)" size="1" pos="65" show="21" value="15"/>
+        <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="66" show="0" value="00"/>
+        <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="66" show="0" value="00"/>
+        <field name="per.open_type_length" showname="Open Type Length: 50" hide="yes" size="1" pos="67" show="50" value="32"/>
+        <field name="ngap.value_element" showname="value" size="50" pos="68" show="" value="">
+          <field name="ngap.NGSetupResponse_element" showname="NGSetupResponse" size="50" pos="68" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="68" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 4" hide="yes" size="2" pos="69" show="4" value="0004"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 4 items" size="47" pos="71" show="4" value="0001000e05806f70656e3567732d616d663000600008000009f10702004000564001ff005000080009f10700000008">
+              <field name="" show="Item 0: id-AMFName" size="18" pos="71" value="0001000e05806f70656e3567732d616d6630">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="18" pos="71" show="" value="">
+                  <field name="ngap.id" showname="id: id-AMFName (1)" size="2" pos="71" show="1" value="0001"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="73" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="73" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 14" hide="yes" size="1" pos="74" show="14" value="0e"/>
+                  <field name="ngap.value_element" showname="value" size="14" pos="75" show="" value="">
+                    <field name="per.extension_present_bit" showname="0... .... Extension Present Bit: False" hide="yes" size="1" pos="75" show="False" value="0" unmaskedvalue="05"/>
+                    <field name="per.octet_string_length" showname="Octet String Length: 12" hide="yes" size="1" pos="75" show="12" value="05"/>
+                    <field name="ngap.AMFName" showname="AMFName: open5gs-amf0" size="12" pos="77" show="open5gs-amf0" value="6f70656e3567732d616d6630"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-ServedGUAMIList" size="12" pos="89" value="00600008000009f107020040">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="12" pos="89" show="" value="">
+                  <field name="ngap.id" showname="id: id-ServedGUAMIList (96)" size="2" pos="89" show="96" value="0060"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="91" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="91" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 8" hide="yes" size="1" pos="92" show="8" value="08"/>
+                  <field name="ngap.value_element" showname="value" size="8" pos="93" show="" value="">
+                    <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="1" pos="93" show="1" value="00"/>
+                    <field name="ngap.ServedGUAMIList" showname="ServedGUAMIList: 1 item" size="7" pos="94" show="1" value="0009f107020040">
+                      <field name="" show="Item 0" size="7" pos="94" value="0009f107020040">
+                        <field name="ngap.ServedGUAMIItem_element" showname="ServedGUAMIItem" size="7" pos="94" show="" value="">
+                          <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="94" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname=".0.. .... Optional Field Bit: False (backupAMFName is NOT present)" hide="yes" size="1" pos="94" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname="..0. .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="94" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="ngap.gUAMI_element" showname="gUAMI" size="7" pos="94" show="" value="">
+                            <field name="per.extension_bit" showname="...0 .... Extension Bit: False" hide="yes" size="1" pos="94" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="per.optional_field_bit" showname=".... 0... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="94" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="95" show="09:f1:07" value="09f107">
+                              <field name="e212.guami.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="95" show="901" value="09f1"/>
+                              <field name="e212.guami.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="96" show="70" value="f107"/>
+                            </field>
+                            <field name="ngap.aMFRegionID" showname="aMFRegionID: 02 [bit length 8, 0000 0010 decimal value 2]" size="1" pos="98" show="02" value="02"/>
+                            <field name="ngap.aMFSetID" showname="aMFSetID: 0040 [bit length 10, 6 LSB pad bits, 0000 0000  01.. .... decimal value 1]" size="2" pos="94" show="00:40" value="0040"/>
+                            <field name="ngap.aMFPointer" showname="aMFPointer: 00 [bit length 6, 2 LSB pad bits, 0000 00.. decimal value 0]" size="1" pos="94" show="00" value="00"/>
+                          </field>
+                        </field>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 2: id-RelativeAMFCapacity" size="5" pos="101" value="00564001ff">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="5" pos="101" show="" value="">
+                  <field name="ngap.id" showname="id: id-RelativeAMFCapacity (86)" size="2" pos="101" show="86" value="0056"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="103" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="103" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 1" hide="yes" size="1" pos="104" show="1" value="01"/>
+                  <field name="ngap.value_element" showname="value" size="1" pos="105" show="" value="">
+                    <field name="ngap.RelativeAMFCapacity" showname="RelativeAMFCapacity: 255" size="1" pos="105" show="255" value="ff"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 3: id-PLMNSupportList" size="12" pos="106" value="005000080009f10700000008">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="12" pos="106" show="" value="">
+                  <field name="ngap.id" showname="id: id-PLMNSupportList (80)" size="2" pos="106" show="80" value="0050"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="108" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="108" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 8" hide="yes" size="1" pos="109" show="8" value="08"/>
+                  <field name="ngap.value_element" showname="value" size="8" pos="110" show="" value="">
+                    <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="1" pos="110" show="1" value="00"/>
+                    <field name="ngap.PLMNSupportList" showname="PLMNSupportList: 1 item" size="7" pos="110" show="1" value="0009f107000000">
+                      <field name="" show="Item 0" size="7" pos="110" value="0009f107000000">
+                        <field name="ngap.PLMNSupportItem_element" showname="PLMNSupportItem" size="7" pos="110" show="" value="">
+                          <field name="per.extension_bit" showname=".... 0... Extension Bit: False" hide="yes" size="1" pos="110" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname=".... .0.. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="110" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="111" show="09:f1:07" value="09f107">
+                            <field name="e212.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="111" show="901" value="09f1"/>
+                            <field name="e212.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="112" show="70" value="f107"/>
+                          </field>
+                          <field name="per.sequence_of_length" showname="Sequence-Of Length: 1" hide="yes" size="2" pos="114" show="1" value="0000"/>
+                          <field name="ngap.sliceSupportList" showname="sliceSupportList: 1 item" size="1" pos="116" show="1" value="00">
+                            <field name="" show="Item 0" size="1" pos="116" value="00">
+                              <field name="ngap.SliceSupportItem_element" showname="SliceSupportItem" size="1" pos="116" show="" value="">
+                                <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                                <field name="per.optional_field_bit" showname=".0.. .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                                <field name="ngap.s_NSSAI_element" showname="s-NSSAI" size="1" pos="116" show="" value="">
+                                  <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                                  <field name="per.optional_field_bit" showname="...0 .... Optional Field Bit: False (sD is NOT present)" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                                  <field name="per.optional_field_bit" showname=".... 0... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                                  <field name="ngap.sST" showname="sST: 01" size="1" pos="116" show="01" value="01"/>
+                                </field>
+                              </field>
+                            </field>
+                          </field>
+                        </field>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="152">
+    <field name="num" pos="0" show="3" showname="Number" value="3" size="152"/>
+    <field name="len" pos="0" show="152" showname="Frame Length" value="98" size="152"/>
+    <field name="caplen" pos="0" show="152" showname="Captured Length" value="98" size="152"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:31.369575351 W. Europe Daylight Time" showname="Captured Time" value="1620368371.369575351" size="152"/>
+  </proto>
+  <proto name="frame" showname="Frame 3: 152 bytes on wire (1216 bits), 152 bytes captured (1216 bits) on interface any, id 0" size="152" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.1, Dst: 127.0.0.5" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 39582 (39582), Dst Port: 38412 (38412)" size="28" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (InitialUEMessage)" size="86" pos="64">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="64" show="False" value="0" unmaskedvalue="00"/>
+    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="64" show="0" value="00"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: initiatingMessage (0)" size="86" pos="64" show="0" value="000f405200000500550002000100260024237e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100007940135009f107000000010009f107000001e43f5a73005a4001200070400100">
+      <field name="ngap.initiatingMessage_element" showname="initiatingMessage" size="86" pos="64" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-InitialUEMessage (15)" size="1" pos="65" show="15" value="0f"/>
+        <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="66" show="1" value="40"/>
+        <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="66" show="1" value="40"/>
+        <field name="per.open_type_length" showname="Open Type Length: 82" hide="yes" size="1" pos="67" show="82" value="52"/>
+        <field name="ngap.value_element" showname="value" size="82" pos="68" show="" value="">
+          <field name="ngap.InitialUEMessage_element" showname="InitialUEMessage" size="82" pos="68" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="68" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 5" hide="yes" size="2" pos="69" show="5" value="0005"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 5 items" size="79" pos="71" show="5" value="00550002000100260024237e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100007940135009f107000000010009f107000001e43f5a73005a4001200070400100">
+              <field name="" show="Item 0: id-RAN-UE-NGAP-ID" size="6" pos="71" value="005500020001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="6" pos="71" show="" value="">
+                  <field name="ngap.id" showname="id: id-RAN-UE-NGAP-ID (85)" size="2" pos="71" show="85" value="0055"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="73" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="73" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 2" hide="yes" size="1" pos="74" show="2" value="02"/>
+                  <field name="ngap.value_element" showname="value" size="2" pos="75" show="" value="">
+                    <field name="ngap.RAN_UE_NGAP_ID" showname="RAN-UE-NGAP-ID: 1" size="2" pos="75" show="1" value="0001"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-NAS-PDU" size="40" pos="77" value="00260024237e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="40" pos="77" show="" value="">
+                  <field name="ngap.id" showname="id: id-NAS-PDU (38)" size="2" pos="77" show="38" value="0026"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="79" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="79" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 36" hide="yes" size="1" pos="80" show="36" value="24"/>
+                  <field name="ngap.value_element" showname="value" size="36" pos="81" show="" value="">
+                    <field name="per.octet_string_length" showname="Octet String Length: 35" hide="yes" size="1" pos="81" show="35" value="23"/>
+                    <field name="ngap.NAS_PDU" showname="NAS-PDU: 7e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100" size="35" pos="82" show="7e:00:41:79:00:0d:01:09:f1:07:00:00:00:00:00:00:00:00:10:10:01:00:2e:04:f0:f0:f0:f0:2f:02:01:01:53:01:00" value="7e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100">
+                      <proto name="nas-5gs" showname="Non-Access-Stratum 5GS (NAS)PDU" size="35" pos="82">
+                        <field name="" show="Plain NAS 5GS Message" size="35" pos="82" value="7e004179000d0109f1070000000000000000101001002e04f0f0f0f02f020101530100">
+                          <field name="nas-5gs.epd" showname="Extended protocol discriminator: 5G mobility management messages (126)" size="1" pos="82" show="126" value="7e"/>
+                          <field name="nas-5gs.spare_half_octet" showname="0000 .... = Spare Half Octet: 0" size="1" pos="83" show="0" value="0" unmaskedvalue="00"/>
+                          <field name="nas-5gs.security_header_type" showname=".... 0000 = Security header type: Plain NAS message, not security protected (0)" size="1" pos="83" show="0" value="0" unmaskedvalue="00"/>
+                          <field name="nas-5gs.mm.message_type" showname="Message type: Registration request (0x41)" size="1" pos="84" show="0x41" value="41"/>
+                          <field name="" show="5GS registration type" size="1" pos="85" value="79">
+                            <field name="nas-5gs.mm.for" showname=".... 1... = Follow-On Request bit (FOR): Follow-on request pending" size="1" pos="85" show="True" value="1" unmaskedvalue="79"/>
+                            <field name="nas-5gs.mm.5gs_reg_type" showname=".... .001 = 5GS registration type: initial registration (1)" size="1" pos="85" show="1" value="1" unmaskedvalue="79"/>
+                          </field>
+                          <field name="" show="NAS key set identifier" size="1" pos="85" value="79">
+                            <field name="nas-5gs.mm.tsc.h1" showname="0... .... = Type of security context flag (TSC): Native security context (for KSIAMF)" size="1" pos="85" show="False" value="0" unmaskedvalue="79"/>
+                            <field name="nas-5gs.mm.nas_key_set_id.h1" showname=".111 .... = NAS key set identifier: 7" size="1" pos="85" show="7" value="7" unmaskedvalue="79"/>
+                          </field>
+                          <field name="" show="5GS mobile identity" size="15" pos="86" value="000d0109f107000000000000000010">
+                            <field name="gsm_a.len" showname="Length: 13" size="2" pos="86" show="13" value="000d"/>
+                            <field name="nas-5gs.spare_b7" showname="0... .... = Spare: 0" size="1" pos="88" show="0" value="0" unmaskedvalue="01"/>
+                            <field name="nas-5gs.mm.suci.supi_fmt" showname=".000 .... = SUPI format: IMSI (0)" size="1" pos="88" show="0" value="0" unmaskedvalue="01"/>
+                            <field name="nas-5gs.spare_b3" showname=".... 0... = Spare: 0" size="1" pos="88" show="0" value="0" unmaskedvalue="01"/>
+                            <field name="nas-5gs.mm.type_id" showname=".... .001 = Type of identity: SUCI (1)" size="1" pos="88" show="1" value="1" unmaskedvalue="01"/>
+                            <field name="e212.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="89" show="901" value="09f1"/>
+                            <field name="e212.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="90" show="70" value="f107"/>
+                            <field name="nas-5gs.mm.suci.routing_indicator" showname="Routing indicator: 0000" size="2" pos="92" show="0000" value="0000"/>
+                            <field name="nas-5gs.mm.suci.scheme_id" showname=".... 0000 = Protection scheme Id: NULL scheme (0)" size="1" pos="94" show="0" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.suci.pki" showname="Home network public key identifier: 0" size="1" pos="95" show="0" value="00"/>
+                            <field name="nas-5gs.mm.suci.msin" showname="MSIN: 0000000001" size="5" pos="96" show="0000000001" value="0000000010"/>
+                          </field>
+                          <field name="" show="5GMM capability" size="3" pos="101" value="100100">
+                            <field name="nas-5gs.mm.elem_id" showname="Element ID: 0x10" size="1" pos="101" show="0x10" value="10"/>
+                            <field name="gsm_a.len" showname="Length: 1" size="1" pos="102" show="1" value="01"/>
+                            <field name="nas-5gs.mm.sgc_b7" showname="0... .... = Service gap control (SGC): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.5g_iphc_cp_ciot_b6" showname=".0.. .... = IP header compression for control plane CIoT 5GS optimization (5G-IPHC-CP CIoT): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.n3_data_b5" showname="..0. .... = N3 data transfer (N3 data): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.5g_cp_ciot_b4" showname="...0 .... = Control plane CIoT 5GS optimization (5G-CP CIoT): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.restrict_ec_b3" showname=".... 0... = Restriction on use of enhanced coverage support (RestrictEC): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.lpp_cap_b2" showname=".... .0.. = LTE Positioning Protocol (LPP) capability: Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.ho_attach_b1" showname=".... ..0. = ATTACH REQUEST message containing PDN CONNECTIVITY REQUEST message for handover support (HO attach): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.s1_mode_b0" showname=".... ...0 = EPC NAS supported (S1 mode): Not supported" size="1" pos="103" show="False" value="0" unmaskedvalue="00"/>
+                          </field>
+                          <field name="" show="UE security capability" size="6" pos="104" value="2e04f0f0f0f0">
+                            <field name="nas-5gs.mm.elem_id" showname="Element ID: 0x2e" size="1" pos="104" show="0x2e" value="2e"/>
+                            <field name="gsm_a.len" showname="Length: 4" size="1" pos="105" show="4" value="04"/>
+                            <field name="nas-5gs.mm.5g_ea0" showname="1... .... = 5G-EA0: Supported" size="1" pos="106" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128_5g_ea1" showname=".1.. .... = 128-5G-EA1: Supported" size="1" pos="106" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128_5g_ea2" showname="..1. .... = 128-5G-EA2: Supported" size="1" pos="106" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128_5g_ea3" showname="...1 .... = 128-5G-EA3: Supported" size="1" pos="106" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ea4" showname=".... 0... = 5G-EA4: Not supported" size="1" pos="106" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ea5" showname=".... .0.. = 5G-EA5: Not supported" size="1" pos="106" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ea6" showname=".... ..0. = 5G-EA6: Not supported" size="1" pos="106" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ea7" showname=".... ...0 = 5G-EA7: Not supported" size="1" pos="106" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.ia0" showname="1... .... = 5G-IA0: Supported" size="1" pos="107" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_128_ia1" showname=".1.. .... = 128-5G-IA1: Supported" size="1" pos="107" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_128_ia2" showname="..1. .... = 128-5G-IA2: Supported" size="1" pos="107" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_128_ia3" showname="...1 .... = 128-5G-IA3: Supported" size="1" pos="107" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_128_ia4" showname=".... 0... = 5G-IA4: Not supported" size="1" pos="107" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ia5" showname=".... .0.. = 5G-IA5: Not supported" size="1" pos="107" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ia6" showname=".... ..0. = 5G-IA6: Not supported" size="1" pos="107" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.5g_ia7" showname=".... ...0 = 5G-IA7: Not supported" size="1" pos="107" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea0" showname="1... .... = EEA0: Supported" size="1" pos="108" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128eea1" showname=".1.. .... = 128-EEA1: Supported" size="1" pos="108" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128eea2" showname="..1. .... = 128-EEA2: Supported" size="1" pos="108" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea3" showname="...1 .... = 128-EEA3: Supported" size="1" pos="108" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea4" showname=".... 0... = EEA4: Not supported" size="1" pos="108" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea5" showname=".... .0.. = EEA5: Not supported" size="1" pos="108" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea6" showname=".... ..0. = EEA6: Not supported" size="1" pos="108" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eea7" showname=".... ...0 = EEA7: Not supported" size="1" pos="108" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia0" showname="1... .... = EIA0: Supported" size="1" pos="109" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128eia1" showname=".1.. .... = 128-EIA1: Supported" size="1" pos="109" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.128eia2" showname="..1. .... = 128-EIA2: Supported" size="1" pos="109" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia3" showname="...1 .... = 128-EIA3: Supported" size="1" pos="109" show="True" value="1" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia4" showname=".... 0... = EIA4: Not supported" size="1" pos="109" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia5" showname=".... .0.. = EIA5: Not supported" size="1" pos="109" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia6" showname=".... ..0. = EIA6: Not supported" size="1" pos="109" show="False" value="0" unmaskedvalue="f0"/>
+                            <field name="nas-5gs.mm.eia7" showname=".... ...0 = EIA7: Not supported" size="1" pos="109" show="False" value="0" unmaskedvalue="f0"/>
+                          </field>
+                          <field name="" show="NSSAI - Requested NSSAI" size="4" pos="110" value="2f020101">
+                            <field name="nas-5gs.mm.elem_id" showname="Element ID: 0x2f" size="1" pos="110" show="0x2f" value="2f"/>
+                            <field name="gsm_a.len" showname="Length: 2" size="1" pos="111" show="2" value="02"/>
+                            <field name="" show="S-NSSAI 1" size="2" pos="112" value="0101">
+                              <field name="nas-5gs.mm.length" showname="Length: 1" size="1" pos="112" show="1" value="01"/>
+                              <field name="nas-5gs.mm.sst" showname="Slice/service type (SST): eMBB (1)" size="1" pos="113" show="1" value="01"/>
+                            </field>
+                          </field>
+                          <field name="" show="5GS update type" size="3" pos="114" value="530100">
+                            <field name="nas-5gs.mm.elem_id" showname="Element ID: 0x53" size="1" pos="114" show="0x53" value="53"/>
+                            <field name="gsm_a.len" showname="Length: 1" size="1" pos="115" show="1" value="01"/>
+                            <field name="nas-5gs.spare_b7" showname="0... .... = Spare: 0" size="1" pos="116" show="0" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.spare_b6" showname=".0.. .... = Spare: 0" size="1" pos="116" show="0" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.eps_pnb_ciot" showname="..00 .... = EPS Preferred CIoT network behaviour (EPS-PNB-CIoT): no additional information (0)" size="1" pos="116" show="0" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.5gs_pnb_ciot" showname=".... 00.. = 5GS Preferred CIoT network behaviour (5GS PNB-CIoT): no additional information (0)" size="1" pos="116" show="0" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.ng_ran_rcu" showname=".... ..0. = NG-RAN Radio Capability Update (NG-RAN-RCU): Not Needed" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                            <field name="nas-5gs.mm.sms_requested" showname=".... ...0 = SMS over NAS transport requested (SMS requested): Not supported" size="1" pos="116" show="False" value="0" unmaskedvalue="00"/>
+                          </field>
+                        </field>
+                      </proto>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 2: id-UserLocationInformation" size="23" pos="117" value="007940135009f107000000010009f107000001e43f5a73">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="23" pos="117" show="" value="">
+                  <field name="ngap.id" showname="id: id-UserLocationInformation (121)" size="2" pos="117" show="121" value="0079"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="119" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="119" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 19" hide="yes" size="1" pos="120" show="19" value="13"/>
+                  <field name="ngap.value_element" showname="value" size="19" pos="121" show="" value="">
+                    <field name="per.choice_index" showname="Choice Index: 1" hide="yes" size="1" pos="121" show="1" value="50"/>
+                    <field name="ngap.UserLocationInformation" showname="UserLocationInformation: userLocationInformationNR (1)" size="19" pos="121" show="1" value="5009f107000000010009f107000001e43f5a73">
+                      <field name="ngap.userLocationInformationNR_element" showname="userLocationInformationNR" size="19" pos="121" show="" value="">
+                        <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="121" show="False" value="0" unmaskedvalue="50"/>
+                        <field name="per.optional_field_bit" showname="...1 .... Optional Field Bit: True (timeStamp is present)" hide="yes" size="1" pos="121" show="True" value="1" unmaskedvalue="50"/>
+                        <field name="per.optional_field_bit" showname=".... 0... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="121" show="False" value="0" unmaskedvalue="50"/>
+                        <field name="ngap.nR_CGI_element" showname="nR-CGI" size="8" pos="121" show="" value="">
+                          <field name="per.extension_bit" showname=".... .0.. Extension Bit: False" hide="yes" size="1" pos="121" show="False" value="0" unmaskedvalue="50"/>
+                          <field name="per.optional_field_bit" showname=".... ..0. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="121" show="False" value="0" unmaskedvalue="50"/>
+                          <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="122" show="09:f1:07" value="09f107">
+                            <field name="e212.nrcgi.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="122" show="901" value="09f1"/>
+                            <field name="e212.nrcgi.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="123" show="70" value="f107"/>
+                          </field>
+                          <field name="ngap.NRCellIdentity" showname="0000 0000 0000 0000 0000 0000 0000 0001 0000 .... = nRCellIdentity: 0x000000010" size="5" pos="121" show="0x0000000000000010" value="10" unmaskedvalue="0000000100"/>
+                        </field>
+                        <field name="ngap.tAI_element" showname="tAI" size="7" pos="129" show="" value="">
+                          <field name="per.extension_bit" showname=".... 0... Extension Bit: False" hide="yes" size="1" pos="129" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname=".... .0.. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="129" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="130" show="09:f1:07" value="09f107">
+                            <field name="e212.5gstai.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="130" show="901" value="09f1"/>
+                            <field name="e212.5gstai.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="131" show="70" value="f107"/>
+                          </field>
+                          <field name="ngap.tAC" showname="tAC: 1 (0x000001)" size="3" pos="133" show="1" value="000001"/>
+                        </field>
+                        <field name="ngap.timeStamp" showname="timeStamp: e43f5a73 (May  7, 2021 06:19:31 UTC)" size="4" pos="136" show="e4:3f:5a:73" value="e43f5a73"/>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 3: id-RRCEstablishmentCause" size="5" pos="140" value="005a400120">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="5" pos="140" show="" value="">
+                  <field name="ngap.id" showname="id: id-RRCEstablishmentCause (90)" size="2" pos="140" show="90" value="005a"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="142" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="142" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 1" hide="yes" size="1" pos="143" show="1" value="01"/>
+                  <field name="ngap.value_element" showname="value" size="1" pos="144" show="" value="">
+                    <field name="per.extension_present_bit" showname="0... .... Extension Present Bit: False" hide="yes" size="1" pos="144" show="False" value="0" unmaskedvalue="20"/>
+                    <field name="per.enum_index" showname="Enumerated Index: 4" hide="yes" size="1" pos="144" show="4" value="20"/>
+                    <field name="ngap.RRCEstablishmentCause" showname="RRCEstablishmentCause: mo-Data (4)" size="1" pos="144" show="4" value="20"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 4: id-UEContextRequest" size="5" pos="145" value="0070400100">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="5" pos="145" show="" value="">
+                  <field name="ngap.id" showname="id: id-UEContextRequest (112)" size="2" pos="145" show="112" value="0070"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="147" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="147" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 1" hide="yes" size="1" pos="148" show="1" value="01"/>
+                  <field name="ngap.value_element" showname="value" size="1" pos="149" show="" value="">
+                    <field name="per.extension_present_bit" showname="0... .... Extension Present Bit: False" hide="yes" size="1" pos="149" show="False" value="0" unmaskedvalue="00"/>
+                    <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="0" pos="149" show="0"/>
+                    <field name="ngap.UEContextRequest" showname="UEContextRequest: requested (0)" size="1" pos="149" show="0" value="00"/>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="108">
+    <field name="num" pos="0" show="4" showname="Number" value="4" size="108"/>
+    <field name="len" pos="0" show="108" showname="Frame Length" value="6c" size="108"/>
+    <field name="caplen" pos="0" show="108" showname="Captured Length" value="6c" size="108"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:31.369829609 W. Europe Daylight Time" showname="Captured Time" value="1620368371.369829609" size="108"/>
+  </proto>
+  <proto name="frame" showname="Frame 4: 108 bytes on wire (864 bits), 108 bytes captured (864 bits) on interface any, id 0" size="108" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.5, Dst: 127.0.0.1" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 38412 (38412), Dst Port: 39582 (39582)" size="44" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (DownlinkNASTransport)" size="28" pos="80">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="80" show="False" value="0" unmaskedvalue="00"/>
+    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="80" show="0" value="00"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: initiatingMessage (0)" size="28" pos="80" show="0" value="00044018000003000a0002000100550002000100260005047e00445f">
+      <field name="ngap.initiatingMessage_element" showname="initiatingMessage" size="28" pos="80" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-DownlinkNASTransport (4)" size="1" pos="81" show="4" value="04"/>
+        <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="82" show="1" value="40"/>
+        <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="82" show="1" value="40"/>
+        <field name="per.open_type_length" showname="Open Type Length: 24" hide="yes" size="1" pos="83" show="24" value="18"/>
+        <field name="ngap.value_element" showname="value" size="24" pos="84" show="" value="">
+          <field name="ngap.DownlinkNASTransport_element" showname="DownlinkNASTransport" size="24" pos="84" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="84" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 3" hide="yes" size="2" pos="85" show="3" value="0003"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 3 items" size="21" pos="87" show="3" value="000a0002000100550002000100260005047e00445f">
+              <field name="" show="Item 0: id-AMF-UE-NGAP-ID" size="6" pos="87" value="000a00020001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="6" pos="87" show="" value="">
+                  <field name="ngap.id" showname="id: id-AMF-UE-NGAP-ID (10)" size="2" pos="87" show="10" value="000a"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="89" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="89" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 2" hide="yes" size="1" pos="90" show="2" value="02"/>
+                  <field name="ngap.value_element" showname="value" size="2" pos="91" show="" value="">
+                    <field name="ngap.AMF_UE_NGAP_ID" showname="AMF-UE-NGAP-ID: 1" size="2" pos="91" show="1" value="0001"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-RAN-UE-NGAP-ID" size="6" pos="93" value="005500020001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="6" pos="93" show="" value="">
+                  <field name="ngap.id" showname="id: id-RAN-UE-NGAP-ID (85)" size="2" pos="93" show="85" value="0055"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="95" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="95" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 2" hide="yes" size="1" pos="96" show="2" value="02"/>
+                  <field name="ngap.value_element" showname="value" size="2" pos="97" show="" value="">
+                    <field name="ngap.RAN_UE_NGAP_ID" showname="RAN-UE-NGAP-ID: 1" size="2" pos="97" show="1" value="0001"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 2: id-NAS-PDU" size="9" pos="99" value="00260005047e00445f">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="9" pos="99" show="" value="">
+                  <field name="ngap.id" showname="id: id-NAS-PDU (38)" size="2" pos="99" show="38" value="0026"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="101" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="101" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 5" hide="yes" size="1" pos="102" show="5" value="05"/>
+                  <field name="ngap.value_element" showname="value" size="5" pos="103" show="" value="">
+                    <field name="per.octet_string_length" showname="Octet String Length: 4" hide="yes" size="1" pos="103" show="4" value="04"/>
+                    <field name="ngap.NAS_PDU" showname="NAS-PDU: 7e00445f" size="4" pos="104" show="7e:00:44:5f" value="7e00445f">
+                      <proto name="nas-5gs" showname="Non-Access-Stratum 5GS (NAS)PDU" size="4" pos="104">
+                        <field name="" show="Plain NAS 5GS Message" size="4" pos="104" value="7e00445f">
+                          <field name="nas-5gs.epd" showname="Extended protocol discriminator: 5G mobility management messages (126)" size="1" pos="104" show="126" value="7e"/>
+                          <field name="nas-5gs.spare_half_octet" showname="0000 .... = Spare Half Octet: 0" size="1" pos="105" show="0" value="0" unmaskedvalue="00"/>
+                          <field name="nas-5gs.security_header_type" showname=".... 0000 = Security header type: Plain NAS message, not security protected (0)" size="1" pos="105" show="0" value="0" unmaskedvalue="00"/>
+                          <field name="nas-5gs.mm.message_type" showname="Message type: Registration reject (0x44)" size="1" pos="106" show="0x44" value="44"/>
+                          <field name="" show="5GMM cause" size="1" pos="107" value="5f">
+                            <field name="nas-5gs.mm.5gmm_cause" showname="5GMM cause: Semantically incorrect message (95)" size="1" pos="107" show="95" value="5f"/>
+                          </field>
+                        </field>
+                      </proto>
+                    </field>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="84">
+    <field name="num" pos="0" show="5" showname="Number" value="5" size="84"/>
+    <field name="len" pos="0" show="84" showname="Frame Length" value="54" size="84"/>
+    <field name="caplen" pos="0" show="84" showname="Captured Length" value="54" size="84"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:31.369858473 W. Europe Daylight Time" showname="Captured Time" value="1620368371.369858473" size="84"/>
+  </proto>
+  <proto name="frame" showname="Frame 5: 84 bytes on wire (672 bits), 84 bytes captured (672 bits) on interface any, id 0" size="84" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.5, Dst: 127.0.0.1" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 38412 (38412), Dst Port: 39582 (39582)" size="28" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (UEContextReleaseCommand)" size="20" pos="64">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="64" show="False" value="0" unmaskedvalue="00"/>
+    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="64" show="0" value="00"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: initiatingMessage (0)" size="20" pos="64" show="0" value="002900100000020072000400010001000f400140">
+      <field name="ngap.initiatingMessage_element" showname="initiatingMessage" size="20" pos="64" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-UEContextRelease (41)" size="1" pos="65" show="41" value="29"/>
+        <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="66" show="0" value="00"/>
+        <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="66" show="0" value="00"/>
+        <field name="per.open_type_length" showname="Open Type Length: 16" hide="yes" size="1" pos="67" show="16" value="10"/>
+        <field name="ngap.value_element" showname="value" size="16" pos="68" show="" value="">
+          <field name="ngap.UEContextReleaseCommand_element" showname="UEContextReleaseCommand" size="16" pos="68" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="68" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 2" hide="yes" size="2" pos="69" show="2" value="0002"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 2 items" size="13" pos="71" show="2" value="0072000400010001000f400140">
+              <field name="" show="Item 0: id-UE-NGAP-IDs" size="8" pos="71" value="0072000400010001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="8" pos="71" show="" value="">
+                  <field name="ngap.id" showname="id: id-UE-NGAP-IDs (114)" size="2" pos="71" show="114" value="0072"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="73" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="73" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 4" hide="yes" size="1" pos="74" show="4" value="04"/>
+                  <field name="ngap.value_element" showname="value" size="4" pos="75" show="" value="">
+                    <field name="per.choice_index" showname="Choice Index: 0" hide="yes" size="1" pos="75" show="0" value="00"/>
+                    <field name="ngap.UE_NGAP_IDs" showname="UE-NGAP-IDs: uE-NGAP-ID-pair (0)" size="4" pos="75" show="0" value="00010001">
+                      <field name="ngap.uE_NGAP_ID_pair_element" showname="uE-NGAP-ID-pair" size="4" pos="75" show="" value="">
+                        <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="75" show="False" value="0" unmaskedvalue="00"/>
+                        <field name="per.optional_field_bit" showname="...0 .... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="75" show="False" value="0" unmaskedvalue="00"/>
+                        <field name="ngap.AMF_UE_NGAP_ID" showname="aMF-UE-NGAP-ID: 1" size="2" pos="75" show="1" value="0001"/>
+                        <field name="ngap.RAN_UE_NGAP_ID" showname="rAN-UE-NGAP-ID: 1" size="2" pos="77" show="1" value="0001"/>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-Cause" size="5" pos="79" value="000f400140">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="5" pos="79" show="" value="">
+                  <field name="ngap.id" showname="id: id-Cause (15)" size="2" pos="79" show="15" value="000f"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="81" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="81" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 1" hide="yes" size="1" pos="82" show="1" value="01"/>
+                  <field name="ngap.value_element" showname="value" size="1" pos="83" show="" value="">
+                    <field name="per.choice_index" showname="Choice Index: 2" hide="yes" size="1" pos="83" show="2" value="40"/>
+                    <field name="ngap.Cause" showname="Cause: nas (2)" size="1" pos="83" show="2" value="40">
+                      <field name="per.extension_present_bit" showname="...0 .... Extension Present Bit: False" hide="yes" size="1" pos="83" show="False" value="0" unmaskedvalue="40"/>
+                      <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="83" show="0" value="40"/>
+                      <field name="ngap.nas" showname="nas: normal-release (0)" size="1" pos="83" show="0" value="40"/>
+                    </field>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+<packet>
+  <proto name="geninfo" pos="0" showname="General information" size="108">
+    <field name="num" pos="0" show="6" showname="Number" value="6" size="108"/>
+    <field name="len" pos="0" show="108" showname="Frame Length" value="6c" size="108"/>
+    <field name="caplen" pos="0" show="108" showname="Captured Length" value="6c" size="108"/>
+    <field name="timestamp" pos="0" show="May  7, 2021 08:19:31.369932953 W. Europe Daylight Time" showname="Captured Time" value="1620368371.369932953" size="108"/>
+  </proto>
+  <proto name="frame" showname="Frame 6: 108 bytes on wire (864 bits), 108 bytes captured (864 bits) on interface any, id 0" size="108" pos="0">
+    <field name="filtered" value="frame" />
+  </proto>
+  <proto name="sll" showname="Linux cooked capture v1" size="16" pos="0">
+    <field name="filtered" value="sll" />
+  </proto>
+  <proto name="ip" showname="Internet Protocol Version 4, Src: 127.0.0.1, Dst: 127.0.0.5" size="20" pos="16">
+    <field name="filtered" value="ip" />
+  </proto>
+  <proto name="sctp" showname="Stream Control Transmission Protocol, Src Port: 39582 (39582), Dst Port: 38412 (38412)" size="28" pos="36">
+    <field name="filtered" value="sctp" />
+  </proto>
+  <proto name="ngap" showname="NG Application Protocol (UEContextReleaseComplete)" size="42" pos="64">
+    <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="64" show="False" value="0" unmaskedvalue="20"/>
+    <field name="per.choice_index" showname="Choice Index: 1" hide="yes" size="1" pos="64" show="1" value="20"/>
+    <field name="ngap.NGAP_PDU" showname="NGAP-PDU: successfulOutcome (1)" size="42" pos="64" show="1" value="20290026000003000a00020001005500020001007940135009f107000000010009f107000001e43f5a73">
+      <field name="ngap.successfulOutcome_element" showname="successfulOutcome" size="42" pos="64" show="" value="">
+        <field name="ngap.procedureCode" showname="procedureCode: id-UEContextRelease (41)" size="1" pos="65" show="41" value="29"/>
+        <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="66" show="0" value="00"/>
+        <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="66" show="0" value="00"/>
+        <field name="per.open_type_length" showname="Open Type Length: 38" hide="yes" size="1" pos="67" show="38" value="26"/>
+        <field name="ngap.value_element" showname="value" size="38" pos="68" show="" value="">
+          <field name="ngap.UEContextReleaseComplete_element" showname="UEContextReleaseComplete" size="38" pos="68" show="" value="">
+            <field name="per.extension_bit" showname="0... .... Extension Bit: False" hide="yes" size="1" pos="68" show="False" value="0" unmaskedvalue="00"/>
+            <field name="per.sequence_of_length" showname="Sequence-Of Length: 3" hide="yes" size="2" pos="69" show="3" value="0003"/>
+            <field name="ngap.protocolIEs" showname="protocolIEs: 3 items" size="35" pos="71" show="3" value="000a00020001005500020001007940135009f107000000010009f107000001e43f5a73">
+              <field name="" show="Item 0: id-AMF-UE-NGAP-ID" size="6" pos="71" value="000a00020001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="6" pos="71" show="" value="">
+                  <field name="ngap.id" showname="id: id-AMF-UE-NGAP-ID (10)" size="2" pos="71" show="10" value="000a"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="73" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="73" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 2" hide="yes" size="1" pos="74" show="2" value="02"/>
+                  <field name="ngap.value_element" showname="value" size="2" pos="75" show="" value="">
+                    <field name="ngap.AMF_UE_NGAP_ID" showname="AMF-UE-NGAP-ID: 1" size="2" pos="75" show="1" value="0001"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 1: id-RAN-UE-NGAP-ID" size="6" pos="77" value="005500020001">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="6" pos="77" show="" value="">
+                  <field name="ngap.id" showname="id: id-RAN-UE-NGAP-ID (85)" size="2" pos="77" show="85" value="0055"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 0" hide="yes" size="1" pos="79" show="0" value="00"/>
+                  <field name="ngap.criticality" showname="criticality: reject (0)" size="1" pos="79" show="0" value="00"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 2" hide="yes" size="1" pos="80" show="2" value="02"/>
+                  <field name="ngap.value_element" showname="value" size="2" pos="81" show="" value="">
+                    <field name="ngap.RAN_UE_NGAP_ID" showname="RAN-UE-NGAP-ID: 1" size="2" pos="81" show="1" value="0001"/>
+                  </field>
+                </field>
+              </field>
+              <field name="" show="Item 2: id-UserLocationInformation" size="23" pos="83" value="007940135009f107000000010009f107000001e43f5a73">
+                <field name="ngap.ProtocolIE_Field_element" showname="ProtocolIE-Field" size="23" pos="83" show="" value="">
+                  <field name="ngap.id" showname="id: id-UserLocationInformation (121)" size="2" pos="83" show="121" value="0079"/>
+                  <field name="per.enum_index" showname="Enumerated Index: 1" hide="yes" size="1" pos="85" show="1" value="40"/>
+                  <field name="ngap.criticality" showname="criticality: ignore (1)" size="1" pos="85" show="1" value="40"/>
+                  <field name="per.open_type_length" showname="Open Type Length: 19" hide="yes" size="1" pos="86" show="19" value="13"/>
+                  <field name="ngap.value_element" showname="value" size="19" pos="87" show="" value="">
+                    <field name="per.choice_index" showname="Choice Index: 1" hide="yes" size="1" pos="87" show="1" value="50"/>
+                    <field name="ngap.UserLocationInformation" showname="UserLocationInformation: userLocationInformationNR (1)" size="19" pos="87" show="1" value="5009f107000000010009f107000001e43f5a73">
+                      <field name="ngap.userLocationInformationNR_element" showname="userLocationInformationNR" size="19" pos="87" show="" value="">
+                        <field name="per.extension_bit" showname="..0. .... Extension Bit: False" hide="yes" size="1" pos="87" show="False" value="0" unmaskedvalue="50"/>
+                        <field name="per.optional_field_bit" showname="...1 .... Optional Field Bit: True (timeStamp is present)" hide="yes" size="1" pos="87" show="True" value="1" unmaskedvalue="50"/>
+                        <field name="per.optional_field_bit" showname=".... 0... Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="87" show="False" value="0" unmaskedvalue="50"/>
+                        <field name="ngap.nR_CGI_element" showname="nR-CGI" size="8" pos="87" show="" value="">
+                          <field name="per.extension_bit" showname=".... .0.. Extension Bit: False" hide="yes" size="1" pos="87" show="False" value="0" unmaskedvalue="50"/>
+                          <field name="per.optional_field_bit" showname=".... ..0. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="87" show="False" value="0" unmaskedvalue="50"/>
+                          <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="88" show="09:f1:07" value="09f107">
+                            <field name="e212.nrcgi.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="88" show="901" value="09f1"/>
+                            <field name="e212.nrcgi.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="89" show="70" value="f107"/>
+                          </field>
+                          <field name="ngap.NRCellIdentity" showname="0000 0000 0000 0000 0000 0000 0000 0001 0000 .... = nRCellIdentity: 0x000000010" size="5" pos="87" show="0x0000000000000010" value="10" unmaskedvalue="0000000100"/>
+                        </field>
+                        <field name="ngap.tAI_element" showname="tAI" size="7" pos="95" show="" value="">
+                          <field name="per.extension_bit" showname=".... 0... Extension Bit: False" hide="yes" size="1" pos="95" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="per.optional_field_bit" showname=".... .0.. Optional Field Bit: False (iE-Extensions is NOT present)" hide="yes" size="1" pos="95" show="False" value="0" unmaskedvalue="00"/>
+                          <field name="ngap.pLMNIdentity" showname="pLMNIdentity: 09f107" size="3" pos="96" show="09:f1:07" value="09f107">
+                            <field name="e212.5gstai.mcc" showname="Mobile Country Code (MCC): International Mobile, shared code (901)" size="2" pos="96" show="901" value="09f1"/>
+                            <field name="e212.5gstai.mnc" showname="Mobile Network Code (MNC): Clementvale Baltic O (70)" size="2" pos="97" show="70" value="f107"/>
+                          </field>
+                          <field name="ngap.tAC" showname="tAC: 1 (0x000001)" size="3" pos="99" show="1" value="000001"/>
+                        </field>
+                        <field name="ngap.timeStamp" showname="timeStamp: e43f5a73 (May  7, 2021 06:19:31 UTC)" size="4" pos="102" show="e4:3f:5a:73" value="e43f5a73"/>
+                      </field>
+                    </field>
+                  </field>
+                </field>
+              </field>
+            </field>
+          </field>
+        </field>
+      </field>
+    </field>
+  </proto>
+</packet>
+
+
+</pdml>
