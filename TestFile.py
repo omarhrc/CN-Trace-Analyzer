@@ -16,8 +16,8 @@ import os.path
 
 # Wireshark trace with 5GC messages
 #wireshark_trace = 'D:\\Temp\\free5gc.pcap'
-#wireshark_trace = 'D:\\Temp\\volte_calls_2.pcapng'
-wireshark_trace = '.\\doc\\s1ap_volte.pcapng'
+wireshark_trace = '.\\doc\\volte_calls_2.pcapng'
+#wireshark_trace = '.\\doc\\s1ap_volte.pcapng'
 #wireshark_trace = 'D:\\Temp\\SIP MT offnet.pcap'
 #wireshark_trace = 'D:\\Temp\\registration_open5gs.pcapng'
 #wireshark_trace = 'D:\\Temp\\EPC_dedicated_bearers.pcapng'
@@ -43,6 +43,7 @@ packets_df = import_pcap_as_dataframe(
 #plot_data = generate_scatterplots_for_wireshark_traces(packets_df)
 
 procedure_df, procedure_frames_df = calculate_procedure_length_eps(packets_df, logging_level=logging.DEBUG)
+print(procedure_df, procedure_frames_df)
 
 # split_pcapng_by_excel_times(pcapng_input_dir, excel_filepath, output_split_dir)
 # result_df = create_vectors_from_traces(output_split_dir)

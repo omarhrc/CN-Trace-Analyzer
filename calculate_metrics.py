@@ -7,7 +7,6 @@ Created on Wed Jun  4 06:37:07 2025
 import pandas as pd
 
 from parsing import json_parser
-import trace_visualizer
 import logging
 import os
 import os.path
@@ -118,9 +117,8 @@ def create_vectors_from_traces(directory_path, pattern="**.pcap*"):
 
 
 def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
-    current_verbosity_level = trace_visualizer.application_logger.level
-    trace_visualizer.application_logger.setLevel(logging_level)
-    
+    if packets_df is None:
+        return None
     procedure_frames = pd.DataFrame()
     for nas_lte_msg in nas_lte.NAS_LTE_MESSAGES:
         procedure_to_add_df = packets_df[packets_df['msg_description'].str.contains(nas_lte_msg,
@@ -156,37 +154,19 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
         lambda x: get_id(r"'ENB-UE-S1AP-ID: ([\d]+)'", x))
 
     unique_ran_ids = procedure_frames['ENB-UE-S1AP-ID'].unique()
-
     logging.debug('Found ENB-UE-S1AP-IDs: {0}'.format(len(unique_ran_ids)))
-
-    procedures = []
-    ProcedureDescription = collections.namedtuple(
-        'ProcedureDescription',
-        'name ENB_UE_S1AP_ID length_ms start_frame end_frame start_timestamp end_timestamp start_datetime end_datetime')
-
     logging.debug('Parsing procedures based on ENB_UE_S1AP_ID')
 
-    emm_manager = EMMProcedureManager()
-    esm_manager = ESMProcedureManager()
-
-####################
+    output_columns = ['ENB_UE_S1AP_ID', 'name', 'length_ms', 'start_frame', 'end_frame',
+               'start_timestamp', 'end_timestamp',
+               'start_datetime', 'end_datetime']
+    procedure_df = pd.DataFrame(columns=output_columns)
 
 
     for ran_id in unique_ran_ids:
-        current_reg_start = 0
-        current_reg_start_frame = 0
-        current_reg_start_datetime = ''
-        current_pdu_session_establishment_start = 0
-        current_pdu_session_establishment_start_frame = 0
-        current_pdu_session_establishment_start_datetime = ''
-        
-        current_eps_dedicated_bearer_establishment_start = 0
-        current_eps_dedicated_bearer_establishment_start_frame = 0
-        current_eps_dedicated_bearer_establishment_start_datetime = ''
         rows = procedure_frames[procedure_frames['ENB-UE-S1AP-ID'] == ran_id]
-
-
-        # display(rows)
+        emm_manager = EMMProcedureManager()
+        esm_manager = ESMProcedureManager()
         for row in rows.itertuples():
             emm_manager.process_emm_messages(row.summary,
                                                  timestamp=row.timestamp,
@@ -194,111 +174,14 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
             esm_manager.process_esm_messages(row.msg_description, row.msg_description,                                                 
                                                  timestamp=row.timestamp, 
                                                  frame=row.frame_number, date_time=row.datetime)
-####
-            # Mobility Management
-            if 'Attach request (0x41)' in row.summary:
-                current_reg_start = row.timestamp
-                current_reg_start_frame = row.frame_number
-                current_reg_start_datetime = row.datetime
-            elif 'Attach accept (0x42)'in row.summary:
-                procedure_time = (row.timestamp - current_reg_start) * 1000
-                procedures.append(
-                    ProcedureDescription('NAS UE Attach - accept', ran_id,
-                                         procedure_time,
-                                         current_reg_start_frame,
-                                         row.frame_number,
-                                         current_reg_start, row.timestamp,
-                                         current_reg_start_datetime, row.datetime))
-            elif 'Attach reject (0x44)'in row.summary:
-                procedure_time = (row.timestamp - current_reg_start) * 1000
-                procedures.append(
-                    ProcedureDescription('NAS UE Attach - reject', ran_id,
-                                         procedure_time,
-                                         current_reg_start_frame,
-                                         row.frame_number,
-                                         current_reg_start, row.timestamp,
-                                         current_reg_start_datetime, row.datetime))
-            # Session Management    
-            if 'PDN connectivity request (0xd0)'in row.summary:
-                current_pdu_session_establishment_start = row.timestamp
-                current_pdu_session_establishment_start_frame = row.frame_number
-                current_pdu_session_establishment_start_datetime = row.datetime
-            elif 'Activate default EPS bearer context request (0xc1)'in row.summary:
-                # PDN connectivity accepted. Finish measurement
-                procedure_time = (row.timestamp - current_pdu_session_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'PDN connectivity - accept', ran_id,
-                    procedure_time,
-                    current_pdu_session_establishment_start_frame,
-                    row.frame_number,
-                    current_pdu_session_establishment_start, row.timestamp,
-                    current_pdu_session_establishment_start_datetime, row.datetime))
-                # Start default EPS bearer measurement                
-                current_eps_default_bearer_establishment_start = row.timestamp
-                current_eps_default_bearer_establishment_start_frame = row.frame_number
-                current_eps_default_bearer_establishment_start_datetime = row.datetime
-            elif 'Activate dedicated EPS bearer context request (0xc5)'in row.summary:
-                current_eps_dedicated_bearer_establishment_start = row.timestamp
-                current_eps_dedicated_bearer_establishment_start_frame = row.frame_number
-                current_eps_dedicated_bearer_establishment_start_datetime = row.datetime
-            if 'PDN connectivity reject (0xd1)'in row.summary:
-                procedure_time = (row.timestamp - current_pdu_session_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'PDN connectivity - reject', ran_id,
-                    procedure_time,
-                    current_pdu_session_establishment_start_frame,
-                    row.frame_number,
-                    current_pdu_session_establishment_start, row.timestamp,
-                    current_pdu_session_establishment_start_datetime, row.datetime))
-            elif 'Activate default EPS bearer context accept (0xc2)'in row.summary:
-                procedure_time = (row.timestamp - current_eps_default_bearer_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'Activate default EPS bearer context - accept', ran_id,
-                    procedure_time,
-                    current_eps_default_bearer_establishment_start_frame,
-                    row.frame_number,
-                    current_eps_default_bearer_establishment_start, row.timestamp,
-                    current_eps_default_bearer_establishment_start_datetime, row.datetime))
-            elif 'Activate default EPS bearer context reject (0xc3)'in row.summary:
-                procedure_time = (row.timestamp - current_pdu_session_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'Activate default EPS bearer context - reject', ran_id,
-                    procedure_time,
-                    current_pdu_session_establishment_start_frame,
-                    row.frame_number,
-                    current_pdu_session_establishment_start, row.timestamp,
-                    current_pdu_session_establishment_start_datetime, row.datetime))
-            elif 'Activate dedicated EPS bearer context accept (0xc6)'in row.summary:
-                procedure_time = (row.timestamp - current_eps_dedicated_bearer_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'Activate dedicated EPS bearer context - accept', ran_id,
-                    procedure_time,
-                    current_eps_dedicated_bearer_establishment_start_frame,
-                    row.frame_number,
-                    current_eps_dedicated_bearer_establishment_start, row.timestamp,
-                    current_eps_dedicated_bearer_establishment_start_datetime, row.datetime))
-            elif 'Activate dedicated EPS bearer context reject (0xc7)'in row.summary:
-                procedure_time = (row.timestamp - current_eps_dedicated_bearer_establishment_start) * 1000
-                procedures.append(ProcedureDescription(
-                    'Activate dedicated EPS bearer context - reject', ran_id,
-                    procedure_time,
-                    current_eps_dedicated_bearer_establishment_start_frame,
-                    row.frame_number,
-                    current_eps_dedicated_bearer_establishment_start, row.timestamp,
-                    current_eps_dedicated_bearer_establishment_start_datetime, row.datetime))
-
-    output_columns = ['ENB_UE_S1AP_ID', 'name', 'length_ms', 'start_frame', 'end_frame',
-               'start_timestamp', 'end_timestamp',
-               'start_datetime', 'end_datetime']
-
-    procedure_df = pd.DataFrame(columns=output_columns)
-    for description_list in emm_manager.procedure_counters.values():
-        procedure_df = pd.concat([procedure_df, pd.DataFrame(description_list, columns=output_columns)],
-                                 ignore_index=True)
-    for description_list in esm_manager.procedure_counters.values():
-        procedure_df = pd.concat([procedure_df, pd.DataFrame(description_list, columns=output_columns)],
-                                 ignore_index=True)
+        for description_list in emm_manager.procedure_counters.values():
+            procedure_counters_df =pd.DataFrame(description_list, columns=output_columns)
+            procedure_counters_df['ENB_UE_S1AP_ID'] = ran_id
+            procedure_df = pd.concat([procedure_df, procedure_counters_df], ignore_index=True)
+        for description_list in esm_manager.procedure_counters.values():
+            procedure_counters_df =pd.DataFrame(description_list, columns=output_columns)
+            procedure_counters_df['ENB_UE_S1AP_ID'] = ran_id
+            procedure_df = pd.concat([procedure_df, procedure_counters_df], ignore_index=True)
 
     logging.debug('Parsed {0} procedures'.format(len(procedure_df)))
-    trace_visualizer.application_logger.setLevel(current_verbosity_level)
     return procedure_df, procedure_frames
