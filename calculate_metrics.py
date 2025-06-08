@@ -26,6 +26,7 @@ import sys
 import glob
 
 import parsing.http_parser
+from parsing.sip_measurements import SIPMeasurementAggregator
 from utils.files import add_folder_to_file_list
 from utils.plantuml import output_files_as_file, plant_uml_jar
 from utils.wireshark import import_pdml, call_wireshark
@@ -115,7 +116,6 @@ def create_vectors_from_traces(directory_path, pattern="**.pcap*"):
     return result_df
 
 
-
 def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
     if packets_df is None:
         return None
@@ -185,3 +185,35 @@ def calculate_procedure_length_eps(packets_df, logging_level=logging.INFO):
 
     logging.debug('Parsed {0} procedures'.format(len(procedure_df)))
     return procedure_df, procedure_frames
+
+
+
+
+def calculate_procedure_length_sip(packets_df, first_call_only=True, logging_level=logging.INFO):
+    if packets_df is None:
+        return None
+    procedure_frames = packets_df[packets_df['protocol'].str.contains('SIP', regex=False)]
+    # Find UACs
+    sip_invite_packets = procedure_frames[procedure_frames['msg_description'].str.contains(r"INVITE sips?:[^ ]+ SIP/2\.0")]
+    if len(sip_invite_packets) == 0:
+        return None
+    sip_uac_df = sip_invite_packets[['ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol']].copy()
+    if first_call_only:
+        sip_uac_df = pd.DataFrame(sip_uac_df.head(1))
+    sip_uac_keys = set(sip_uac_df.itertuples(index=False, name=None))
+
+    logging.debug("Parsing SIP procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
+    aggregator = SIPMeasurementAggregator()
+    for sip_uac in sip_uac_keys:
+        for row in procedure_frames.itertuples():
+            if sip_uac in {
+                (row.ip_src, row.port_src, row.ip_dst, row.port_dst, row.transport_protocol),
+                (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol)
+            }:
+                aggregator.process_message((*sip_uac, True),
+                                   row.msg_description,
+                                   timestamp=row.timestamp,
+                                    frame=row.frame_number)
+    dataframes = aggregator.get_all_data()
+    logging.debug('Parsed {0} calls'.format(len(dataframes['measurements'])))
+    return dataframes['measurements'], procedure_frames

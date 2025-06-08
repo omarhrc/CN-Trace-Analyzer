@@ -1016,7 +1016,7 @@ def _generate_summary_row(x):
     elif protocol == 'PFCP':
         summary = summary_raw.split('\\n')[-1].strip()
     elif protocol == 'HTTP/2':
-        sbi_url_descriptions = parsing.http.parse_sbi_type_from_url(summary_raw)
+        sbi_url_descriptions = parsing.http_parser.parse_sbi_type_from_url(summary_raw)
         if sbi_url_descriptions is None:
             summary = ''
         else:
@@ -1028,7 +1028,7 @@ def _generate_summary_row(x):
 #                  summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').split(',')[
 #                      -1].strip()
     #              summary_raw.replace('\\n', ',').replace('\n', '').replace('S1AP ', '').replace('NAS-EPS ', '').strip()
-    elif protocol == 'SIP':
+    elif 'SIP' in protocol:
         try:
             sip_req_match = sip_req_regex.search(summary_raw)
             summary = 'SIP ' + sip_req_match.group(1)
