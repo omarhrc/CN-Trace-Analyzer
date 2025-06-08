@@ -8,7 +8,7 @@ from typing import NamedTuple
 from parsing.common import PacketDescription
 from parsing.diameter_radius import get_diam_description
 from parsing.gtp import gtpv2_req_regex, gtpv2_message_type_regex
-from parsing.http import http_rsp_regex, http_url_regex, http_method_regex
+from parsing.http_parser import http_rsp_regex, http_url_regex, http_method_regex
 from parsing.nas import nas_req_regex, ngap_message_type_regex, nas_message_type_regex
 from parsing.pfcp import pfcp_req_regex, pfcp_message_type_regex
 from parsing.sip import sip_rsp_regex, sip_req_regex

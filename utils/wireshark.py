@@ -10,13 +10,13 @@ from xml.etree import ElementTree as ET
 import pandas as pd
 from packaging import version
 
-import parsing.http
+import parsing.http_parser
 import utils.plantuml
 import yaml_parser
 from parsing.common import PacketType, PacketDescription
 from parsing.diameter_radius import parse_diam_proto
 from parsing.gtp import parse_gtpv2_proto
-from parsing.http import parse_http_proto
+from parsing.http_parser import parse_http_proto
 from parsing.icmp import parse_icmp_proto
 from parsing.ipv6 import parse_ipv6_route_advertisement_proto
 from parsing.nas import parse_nas_proto

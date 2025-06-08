@@ -10,7 +10,7 @@ import os.path
 import platform
 import sys
 
-import parsing.http
+import parsing.http_parser
 from utils.files import add_folder_to_file_list
 from utils.plantuml import output_files_as_file, plant_uml_jar
 from utils.wireshark import import_pdml, call_wireshark
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         print('  New OpenStack servers file: {0}'.format(args.openstackservers))
     print()
 
-    parsing.http.http2_string_unescape = args.unescapehttp
+    parsing.http_parser.http2_string_unescape = args.unescapehttp
 
     input_file = args.input
     if args.wireshark != 'none':

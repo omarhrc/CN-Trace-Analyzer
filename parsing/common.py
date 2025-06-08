@@ -143,7 +143,7 @@ class ProcedureMeasurement(Machine):
             self.set_state(initial_state)
         
     def start_procedure_measurement(self, **kwargs):
-        self.reset_measurement()
+#        self.reset_measurement()
         self.start_message = CounterDescription(counter_name=kwargs['counter_name'],
                                                 timestamp=kwargs['timestamp'],
                                                 frame=kwargs['frame'],
@@ -184,7 +184,12 @@ class ProcedureMeasurement(Machine):
     def check_and_trigger(self, row_summary, **kwargs):
         for current_valid_trigger in self.get_triggers(self.state):
             if current_valid_trigger in row_summary:
-                self.trigger(current_valid_trigger, counter_name=current_valid_trigger, **kwargs)
+                counter_name = current_valid_trigger
+                if 'counter_name' in kwargs.keys():
+                    self.trigger(current_valid_trigger, **kwargs)
+                else:
+                    self.trigger(current_valid_trigger, counter_name=counter_name, **kwargs)
+                break
 
     def get_all_counters(self):
         return self.procedure_counters

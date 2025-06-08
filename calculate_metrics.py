@@ -26,7 +26,7 @@ import sys
 
 import glob
 
-import parsing.http
+import parsing.http_parser
 from utils.files import add_folder_to_file_list
 from utils.plantuml import output_files_as_file, plant_uml_jar
 from utils.wireshark import import_pdml, call_wireshark
