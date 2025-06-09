@@ -6,36 +6,20 @@ Created on Wed Jun  4 06:37:07 2025
 """
 import pandas as pd
 
-from parsing import json_parser
 import logging
 import os
 import os.path
-import plotly.graph_objects as go
-import bz2
-import pickle
-import xml.etree.ElementTree as ET
-from lxml import etree
-import collections
-import numpy as np
 import re
 
-import argparse
 import platform
-import sys
-
 import glob
 
-import parsing.http_parser
 from parsing.sip_measurements import SIPMeasurementAggregator
 from parsing.diameter_measurements import DiameterMeasurementAggregator
 from parsing.pfcp_measurements import PfcpMeasurementAggregator
-from utils.files import add_folder_to_file_list
-from utils.plantuml import output_files_as_file, plant_uml_jar
-from utils.wireshark import import_pdml, call_wireshark
+from parsing.gtp_measurements import GtpMeasurementAggregator
 from utils.wireshark import import_pcap_as_dataframe
-
 from parsing import nas_lte
-from parsing.common import ProcedureMeasurement
 from parsing.s1ap_measurements import ESMProcedureManager, EMMProcedureManager
 
 application_logger = logging.getLogger()
@@ -44,6 +28,38 @@ application_logger.setLevel(logging.DEBUG)
 debug = False
 
 PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP', 'SDP']
+FEATURE_NAMES = ['tps']
+
+def get_unique_endpoints(packets_df):
+    """
+    Calculates the number of unique network endpoints from a DataFrame in an optimized way.
+
+    This method is more memory-efficient than creating and concatenating
+    two separate DataFrames.
+
+    Args:
+        packets_df: A pandas DataFrame with columns 'ip_src', 'port_src',
+                    'ip_dst', 'port_dst', and 'transport_protocol'.
+
+    Returns:
+        int: The total number of unique endpoints.
+    """
+    # 1. Stack the source and destination IP addresses and ports into single Series.
+    # The transport_protocol Series is duplicated to match the new length.
+    ips = pd.concat([packets_df['ip_src'], packets_df['ip_dst']], ignore_index=True)
+    ports = pd.concat([packets_df['port_src'], packets_df['port_dst']], ignore_index=True)
+    protocols = pd.concat([packets_df['transport_protocol'], packets_df['transport_protocol']], ignore_index=True)
+
+    # 2. Create a new DataFrame from the stacked Series.
+    endpoints_df = pd.DataFrame({
+        'ip_addr': ips,
+        'port': ports,
+        'transport_protocol': protocols
+    })
+
+    # 3. Drop duplicates and return the count of the remaining unique rows.
+    # .shape[0] is a fast way to get the number of rows (the length).
+    return endpoints_df.drop_duplicates().shape[0]
 
 
 def create_protocol_features(packets_df, protocol, total_duration):
@@ -53,8 +69,7 @@ def create_protocol_features(packets_df, protocol, total_duration):
     protocol_packets = packets_df[packets_df['protocol'].str.contains(protocol)]
     # Feature 1 - TPS
     transactions_per_second = len(protocol_packets)/total_duration
-    feature_names = ['tps']
-    protocol_feature_names = [f'{protocol}_{feature}' for feature in feature_names]
+    protocol_feature_names = [f'{protocol}_{feature}' for feature in FEATURE_NAMES]
     feature_values = [transactions_per_second]
     return dict(zip(protocol_feature_names, feature_values))
 
@@ -65,6 +80,7 @@ def create_feature_vector(packets_df):
     for protocol in PROTOCOLS:
         feature_vector.update(create_protocol_features(packets_df, protocol, total_duration))
     feature_vector.update({"total_duration":total_duration})
+    feature_vector.update({"total_unique_endpoints": get_unique_endpoints(packets_df)})
     return feature_vector
 
 
@@ -261,7 +277,7 @@ def calculate_procedure_length_pfcp(packets_df, logging_level=logging.INFO):
 
     pfcp_keys = set(pfcp_requests_df.itertuples(index=False, name=None))
 
-    logging.debug("Parsing diameter procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
+    logging.debug("Parsing pfcp procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
     aggregator = PfcpMeasurementAggregator()
     for pfcp_peer in pfcp_keys:
         for row in procedure_frames.itertuples():
@@ -270,6 +286,39 @@ def calculate_procedure_length_pfcp(packets_df, logging_level=logging.INFO):
                 (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol),
             }:
                 aggregator.process_message((*pfcp_peer, True),
+                                   row.msg_description,
+                                   timestamp=row.timestamp,
+                                    frame=row.frame_number)
+    dataframes = aggregator.get_all_data()
+    logging.debug('Parsed {0} calls'.format(len(dataframes['measurements'])))
+    return dataframes['measurements'], procedure_frames
+
+
+def calculate_procedure_length_gtp(packets_df, logging_level=logging.INFO):
+    if packets_df is None:
+        return None
+    procedure_frames = packets_df[packets_df['protocol'].str.contains('GTP', regex=False)]
+    # Find GTP endpoints
+    gtp_requests = procedure_frames[procedure_frames['msg_description'].str.contains(r"Message Type:.*?Request")]
+    if len(gtp_requests) == 0:
+        return None
+    gtp_requests_df = gtp_requests[['ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol']].copy()
+
+    gtp_keys = set(gtp_requests_df.itertuples(index=False, name=None))
+
+    logging.debug("Parsing GTPv2 procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
+    aggregator = GtpMeasurementAggregator()
+    for gtp_peer in gtp_keys:
+        for row in procedure_frames.itertuples():
+            peer = None
+            peer1 = (row.ip_src, row.port_src, row.ip_dst, row.port_dst, row.transport_protocol)
+            peer2 = (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol)
+            if gtp_peer == peer1:
+                peer = peer1
+            if gtp_peer == peer2:
+                peer = peer2
+            if peer:
+                aggregator.process_message(gtp_peer, peer==peer1,
                                    row.msg_description,
                                    timestamp=row.timestamp,
                                     frame=row.frame_number)
