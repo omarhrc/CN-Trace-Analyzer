@@ -27,6 +27,8 @@ import glob
 
 import parsing.http_parser
 from parsing.sip_measurements import SIPMeasurementAggregator
+from parsing.diameter_measurements import DiameterMeasurementAggregator
+from parsing.pfcp_measurements import PfcpMeasurementAggregator
 from utils.files import add_folder_to_file_list
 from utils.plantuml import output_files_as_file, plant_uml_jar
 from utils.wireshark import import_pdml, call_wireshark
@@ -211,6 +213,63 @@ def calculate_procedure_length_sip(packets_df, first_call_only=True, logging_lev
                 (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol)
             }:
                 aggregator.process_message((*sip_uac, True),
+                                   row.msg_description,
+                                   timestamp=row.timestamp,
+                                    frame=row.frame_number)
+    dataframes = aggregator.get_all_data()
+    logging.debug('Parsed {0} calls'.format(len(dataframes['measurements'])))
+    return dataframes['measurements'], procedure_frames
+
+
+def calculate_procedure_length_diameter(packets_df, logging_level=logging.INFO):
+    if packets_df is None:
+        return None
+    procedure_frames = packets_df[packets_df['protocol'].str.contains('Diameter', regex=False)]
+    # Find diameter endpoints
+    diameter_requests = procedure_frames[procedure_frames['msg_description'].str.contains(r"= Request: Set")]
+    if len(diameter_requests) == 0:
+        return None
+    diameter_requests_df = diameter_requests[['ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol']].copy()
+
+    diameter_keys = set(diameter_requests_df.itertuples(index=False, name=None))
+
+    logging.debug("Parsing diameter procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
+    aggregator = DiameterMeasurementAggregator()
+    for diameter_peer in diameter_keys:
+        for row in procedure_frames.itertuples():
+            if diameter_peer in {
+                (row.ip_src, row.port_src, row.ip_dst, row.port_dst, row.transport_protocol),
+                (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol)
+            }:
+                aggregator.process_message((*diameter_peer, True),
+                                   row.msg_description,
+                                   timestamp=row.timestamp,
+                                    frame=row.frame_number)
+    dataframes = aggregator.get_all_data()
+    logging.debug('Parsed {0} calls'.format(len(dataframes['measurements'])))
+    return dataframes['measurements'], procedure_frames
+
+def calculate_procedure_length_pfcp(packets_df, logging_level=logging.INFO):
+    if packets_df is None:
+        return None
+    procedure_frames = packets_df[packets_df['protocol'].str.contains('PFCP', regex=False)]
+    # Find PFCP endpoints
+    pfcp_requests = procedure_frames[procedure_frames['msg_description'].str.contains(r"Message Type:.*?Request")]
+    if len(pfcp_requests) == 0:
+        return None
+    pfcp_requests_df = pfcp_requests[['ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol']].copy()
+
+    pfcp_keys = set(pfcp_requests_df.itertuples(index=False, name=None))
+
+    logging.debug("Parsing diameter procedures based on ('ip_src', 'port_src', 'ip_dst', 'port_dst', 'transport_protocol')")
+    aggregator = PfcpMeasurementAggregator()
+    for pfcp_peer in pfcp_keys:
+        for row in procedure_frames.itertuples():
+            if pfcp_peer in {
+                (row.ip_src, row.port_src, row.ip_dst, row.port_dst, row.transport_protocol),
+                (row.ip_dst, row.port_dst, row.ip_src, row.port_src, row.transport_protocol),
+            }:
+                aggregator.process_message((*pfcp_peer, True),
                                    row.msg_description,
                                    timestamp=row.timestamp,
                                     frame=row.frame_number)

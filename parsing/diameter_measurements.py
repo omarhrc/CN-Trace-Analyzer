@@ -74,6 +74,20 @@ class DiameterProcedureMeasurement(ProcedureMeasurement):
             start_datetime=start_dt, end_datetime=end_dt
         )
 
+    def get_valid_sources_for_trigger(self, trigger_name: str) -> list:
+        """Finds all valid source states for a given trigger from the transitions table."""
+        valid_sources = []
+        for transition in self.transitions:
+            if transition['trigger'] == trigger_name:
+                source = transition['source']
+                if source == '*':
+                    return self.states
+                if isinstance(source, list):
+                    valid_sources.extend(source)
+                else:
+                    valid_sources.append(source)
+        return valid_sources
+
     def process_answer(self, result_code: int, **kwargs):
         """Processes a Diameter Answer message."""
         if 2000 <= result_code < 3000:
@@ -196,20 +210,20 @@ class DiameterMeasurementAggregator:
         info = {'message_type': DiameterMessageType.UNKNOWN, 'hop_by_hop_id': None, 'command_code': 'Unknown',
                 'result_code': None}
 
-        if hbh_match := re.search(r"Hop-by-Hop-ID:\s*(\S+)", raw_message, re.IGNORECASE):
+        if hbh_match := re.search(r"Hop-by-Hop Identifier:\s*(\S+)", raw_message, re.IGNORECASE):
             info['hop_by_hop_id'] = hbh_match.group(1)
 
-        if cmd_match := re.search(r"Command-Code:\s*(\d+)\s*\((.+)\)", raw_message, re.IGNORECASE):
-            info['command_code'] = cmd_match.group(2)  # e.g., Credit-Control
+        if cmd_match := re.search(r"Command Code: (.*?)\s*\((\d+)\)", raw_message, re.IGNORECASE):
+            info['command_code'] = cmd_match.group(2)  # e.g., '272'
 
-        # 'R' (Request) flag determines message type
-        if re.search(r"Flags:.*R", raw_message, re.IGNORECASE):
+        # 'Request: Set' determines message type
+        if re.search(r"Request: Set", raw_message, re.IGNORECASE):
             info['message_type'] = DiameterMessageType.REQUEST
         else:
             info['message_type'] = DiameterMessageType.ANSWER
 
-        if rc_match := re.search(r"Result-Code:\s*(\d+)", raw_message, re.IGNORECASE):
-            info['result_code'] = int(rc_match.group(1))
+        if rc_match := re.search(r"Result-Code: (.*?)\s*\((\d+)\)", raw_message, re.IGNORECASE):
+            info['result_code'] = int(rc_match.group(2)) # e.g., 2001
 
         return info
 
@@ -262,31 +276,31 @@ if __name__ == "__main__":
     # A key representing a specific Diameter client-server flow
     flow_key = ('10.1.1.1', 3868, '10.2.2.2', 3868, 'SCTP', True)
 
-    # --- Mock Diameter Message Templates ---
+    # --- Mock Diameter Message Templates (ADJUSTED FOR NEW REGEX) ---
     # Credit-Control-Request (CCR)
     ccr_tpl = """
-    Command-Code: 272 (Credit-Control)
-    Flags: R, Pxy
-    Hop-by-Hop-ID: {hbh_id}
+    Request: Set
+    Hop-by-Hop Identifier: {hbh_id}
+    Command Code: Credit-Control (272)
     """
     # Credit-Control-Answer (CCA) - Success
     cca_success_tpl = """
-    Command-Code: 272 (Credit-Control)
-    Flags: Pxy
-    Hop-by-Hop-ID: {hbh_id}
-    Result-Code: 2001 (DIAMETER_SUCCESS)
+    Request: Not Set
+    Hop-by-Hop Identifier: {hbh_id}
+    Command Code: Credit-Control (272)
+    Result-Code: DIAMETER_SUCCESS (2001)
     """
     # Credit-Control-Answer (CCA) - Failure
     cca_failure_tpl = """
-    Command-Code: 272 (Credit-Control)
-    Flags: Pxy
-    Hop-by-Hop-ID: {hbh_id}
-    Result-Code: 5030 (DIAMETER_USER_UNKNOWN)
+    Request: Not Set
+    Hop-by-Hop Identifier: {hbh_id}
+    Command Code: Credit-Control (272)
+    Result-Code: DIAMETER_USER_UNKNOWN (5030)
     """
 
     ts = datetime.now().timestamp()
 
-    # --- Simulation ---
+    # --- Simulation (No changes needed here) ---
     logging.info("\n--- Simulating a successful Diameter transaction ---")
     aggregator.process_message(flow_key, ccr_tpl.format(hbh_id='111'), ts, 10)
     aggregator.process_message(flow_key, cca_success_tpl.format(hbh_id='111'), ts + 0.05, 11)

@@ -17,6 +17,7 @@ class SipMessageType(Enum):
     ACK = "ACK"
     BYE = "BYE"
     CANCEL = "CANCEL"
+    REGISTER = "REGISTER"  # Added REGISTER
     CLIENT_ERROR = "4xx"
     SERVER_ERROR = "5xx"
     GLOBAL_FAILURE = "6xx"
@@ -78,42 +79,39 @@ class SIPCallSetupMeasurement(ProcedureMeasurement):
                                     start_datetime=start_dt, end_datetime=end_dt)
 
     def check_and_trigger(self, event, **kwargs):
+        # This is a simplified state machine trigger for demonstration.
+        # A full implementation would use the transitions table.
         if event == 'event_invite' and self.state == 'INITIAL':
-            self.state = 'INVITE_SENT'; self.start_procedure_measurement(**kwargs)
+            self.state = 'INVITE_SENT';
+            self.start_procedure_measurement(**kwargs)
         elif event == 'event_provisional' and self.state in ['INVITE_SENT', 'PROCEEDING']:
             self.state = 'PROCEEDING'
         elif event == 'event_success_resp' and self.state in ['INVITE_SENT', 'PROCEEDING']:
             self.state = 'WAITING_FOR_ACK'
         elif event == 'event_ack' and self.state == 'WAITING_FOR_ACK':
-            self.state = 'SUCCESS'; self.end_procedure_measurement(**kwargs)
+            self.state = 'SUCCESS';
+            self.end_procedure_measurement(**kwargs)
         elif event == 'event_failure':
-            self.state = 'FAILED'; self.end_procedure_measurement(**kwargs)
+            self.state = 'FAILED';
+            self.end_procedure_measurement(**kwargs)
 
     def process_sip_message(self, message_type: SipMessageType, sip_response_code: int = None, cseq_number: int = None,
                             cseq_method: str = None, **kwargs):
         """Processes a SIP message, validating it against the monitored CSeq transaction."""
-        # Start monitoring the CSeq of the first INVITE for this measurement instance.
         if message_type == SipMessageType.INVITE and self.state == 'INITIAL' and self.is_caller:
             self.monitored_cseq = cseq_number
             self.monitored_method = cseq_method.upper() if cseq_method else None
-        # If we have started monitoring, all subsequent relevant messages must match the CSeq.
         elif self.monitored_cseq is not None:
             is_response = sip_response_code is not None
-            # Responses and CANCEL requests must match the CSeq number and original method.
             if is_response or (message_type == SipMessageType.CANCEL and self.is_caller):
                 if cseq_number != self.monitored_cseq or (cseq_method and cseq_method.upper() != self.monitored_method):
-                    logging.debug(
-                        f"[{self.call_id}] Ignoring message with CSeq {cseq_number} {cseq_method} - does not match monitored transaction {self.monitored_cseq} {self.monitored_method}.")
                     return
 
         event, counter_name = self._get_event_for_message(message_type, sip_response_code)
         if event:
             self.check_and_trigger(event, counter_name=counter_name, **kwargs)
-        else:
-            logging.debug(f"[{self.call_id}] No transition for message {message_type.value} in state {self.state}")
 
     def _get_event_for_message(self, msg_type: SipMessageType, code: int = None) -> tuple:
-        # The logic here remains the same, as the CSeq validation happens before this is called.
         if self.is_caller:
             if msg_type == SipMessageType.INVITE: return 'event_invite', "INVITE Request"
             if msg_type == SipMessageType.ACK: return 'event_ack', "ACK Request"
@@ -123,11 +121,108 @@ class SIPCallSetupMeasurement(ProcedureMeasurement):
         error_map = {SipMessageType.CLIENT_ERROR: f"4xx Client Error ({code})",
                      SipMessageType.SERVER_ERROR: f"5xx Server Error ({code})",
                      SipMessageType.GLOBAL_FAILURE: f"6xx Global Failure ({code})",
-                     SipMessageType.REQUEST_TIMEOUT: f"408 Request Timeout",
-                     SipMessageType.SERVER_TIMEOUT: f"504 Server Timeout",
+                     SipMessageType.REQUEST_TIMEOUT: "408 Request Timeout",
+                     SipMessageType.SERVER_TIMEOUT: "504 Server Timeout",
                      SipMessageType.BYE: "BYE Received (During Setup)"}
         if msg_type in error_map and self.state not in ['SUCCESS', 'FAILED']: return 'event_failure', error_map[
             msg_type]
+        return None, None
+
+
+# NEW: Class for Registration Success Rate
+class SIPRegistrationSuccessRateMeasurement:
+    """A simple accumulator for SIP registration success and failure statistics."""
+
+    def __init__(self, name="SIP Registration Success Rate"):
+        self.name = name
+        self.reset()
+
+    def record_registration_attempt(self): self.total_registrations_attempted += 1
+
+    def record_registration_success(self): self.total_registrations_successful += 1
+
+    def record_registration_failure(self, reason: str):
+        self.total_registrations_failed += 1
+        self.failure_reasons[reason] += 1
+
+    def get_success_rate(self) -> float:
+        if not self.total_registrations_attempted: return 0.0
+        return (self.total_registrations_successful / self.total_registrations_attempted) * 100
+
+    def get_statistics(self) -> dict:
+        return {"Total Registrations Attempted": self.total_registrations_attempted,
+                "Total Registrations Successful": self.total_registrations_successful,
+                "Total Registrations Failed": self.total_registrations_failed,
+                "Success Rate (%)": f"{self.get_success_rate():.2f}",
+                "Failure Reasons": dict(self.failure_reasons)}
+
+    def reset(self):
+        self.total_registrations_attempted = 0
+        self.total_registrations_successful = 0
+        self.total_registrations_failed = 0
+        self.failure_reasons = defaultdict(int)
+
+
+# NEW: Class for individual Registration Measurement
+class SIPRegistrationMeasurement(ProcedureMeasurement):
+    """Measures SIP Registration Time using a state machine."""
+    states = ['INITIAL', 'REGISTER_SENT', 'SUCCESS', 'FAILED']
+    transitions = [
+        {'trigger': 'event_register', 'source': 'INITIAL', 'dest': 'REGISTER_SENT',
+         'after': 'start_procedure_measurement'},
+        {'trigger': 'event_success_resp', 'source': 'REGISTER_SENT', 'dest': 'SUCCESS',
+         'after': 'end_procedure_measurement'},
+        {'trigger': 'event_failure', 'source': 'REGISTER_SENT', 'dest': 'FAILED', 'after': 'end_procedure_measurement'},
+    ]
+
+    def __init__(self, call_id: str, cseq: int, is_caller: bool):
+        self.call_id = call_id
+        self.is_caller = is_caller
+        super().__init__(procedure_name="SIP Registration", states=self.states, transitions=self.transitions,
+                         initial_state='INITIAL')
+        self.reset_measurement(initial_state='INITIAL')
+        self.monitored_cseq = cseq
+        self.monitored_method = "REGISTER"
+
+    def reset_measurement(self, initial_state=None):
+        self.state = initial_state or 'INITIAL'
+        self.start_message = None;
+        self.outcome = None;
+        self.termination_reason = None;
+        self.success = False
+
+    def start_procedure_measurement(self, **kwargs):
+        self.start_message = (kwargs['timestamp'], kwargs['frame'], kwargs['date_time'])
+
+    def end_procedure_measurement(self, **kwargs):
+        self.outcome = (kwargs['timestamp'], kwargs['frame'], kwargs['date_time'])
+        self.termination_reason = kwargs.get('counter_name')
+        self.success = self.state == 'SUCCESS'
+
+    def is_measurement_finished(self):
+        return self.outcome is not None
+
+    def get_measurement(self):
+        if not self.is_measurement_finished() or not self.start_message: return None
+        start_ts, start_frame, start_dt = self.start_message
+        end_ts, end_frame, end_dt = self.outcome
+        return ProcedureDescription(key=None, procedure="SIP Registration", length_ms=(end_ts - start_ts) * 1000,
+                                    start_frame=start_frame, end_frame=end_frame, start_timestamp=start_ts,
+                                    end_timestamp=end_ts, start_datetime=start_dt, end_datetime=end_dt)
+
+    def process_sip_message(self, message_type: SipMessageType, cseq_number: int, cseq_method: str, **kwargs):
+        # Only process messages matching the CSeq of the initial REGISTER
+        if not (cseq_number == self.monitored_cseq and cseq_method.upper() == self.monitored_method):
+            return
+        event, counter_name = self._get_event_for_message(message_type, kwargs.get('sip_response_code'))
+        if event and self.state in self.get_valid_sources_for_trigger(event):
+            self.trigger(event, counter_name=counter_name, **kwargs)
+
+    def _get_event_for_message(self, msg_type: SipMessageType, code: int = None) -> tuple:
+        if self.is_caller and msg_type == SipMessageType.REGISTER: return 'event_register', "REGISTER Request"
+        if msg_type == SipMessageType.SUCCESS_RESPONSE: return 'event_success_resp', f"2xx Response ({code})"
+        if msg_type in [SipMessageType.CLIENT_ERROR, SipMessageType.SERVER_ERROR, SipMessageType.GLOBAL_FAILURE]:
+            return 'event_failure', f"Error Response ({code})"
         return None, None
 
 
@@ -162,43 +257,81 @@ class SIPCallSuccessRateMeasurement:
         self.failure_reasons = defaultdict(int)
 
 
-class SIPCallSetupManager:
-    """Manages multiple concurrent SIP call setup measurements."""
+# REFACTORED: SIPCallSetupManager is now the more generic SIPFlowManager
+class SIPFlowManager:
+    """Manages multiple concurrent SIP procedure measurements for a single flow."""
 
     def __init__(self, flow_key: tuple = None):
         self.flow_key = flow_key
+        # Trackers for different procedures
         self.active_call_setups: dict[str, SIPCallSetupMeasurement] = {}
-        self.completed_call_setups: list[ProcedureDescription] = []
+        self.active_registrations: dict[str, SIPRegistrationMeasurement] = {}  # New
+        self.completed_procedures: list[ProcedureDescription] = []
+        # Success rate trackers
         self.call_success_rate_tracker = SIPCallSuccessRateMeasurement()
+        self.registration_success_rate_tracker = SIPRegistrationSuccessRateMeasurement()  # New
         self.sip_protocol_counters = defaultdict(int)
 
-    def process_sip_message(self, call_id: str, message_type: SipMessageType, is_caller: bool,
-                            sip_response_code: int = None, **kwargs):
-        """Routes a SIP message to the correct measurement instance, creating one if necessary."""
-        self.sip_protocol_counters[message_type.value] += 1
-        if sip_response_code: self.sip_protocol_counters[f"SIP_Response_{sip_response_code}"] += 1
+    def _process_call_message(self, call_id: str, message_type: SipMessageType, is_caller: bool, **kwargs):
         measurement = self.active_call_setups.get(call_id)
         if not measurement and message_type == SipMessageType.INVITE and is_caller:
             measurement = SIPCallSetupMeasurement(call_id=call_id, is_caller=True)
             self.active_call_setups[call_id] = measurement
             self.call_success_rate_tracker.record_call_attempt()
         if measurement:
-            measurement.process_sip_message(message_type, sip_response_code, is_caller=is_caller, **kwargs)
+            measurement.process_sip_message(message_type, is_caller=is_caller, **kwargs)
             if measurement.is_measurement_finished():
                 if measurement.success:
                     self.call_success_rate_tracker.record_call_success()
                 else:
                     self.call_success_rate_tracker.record_call_failure(measurement.termination_reason)
                 if completed_data := measurement.get_measurement():
-                    stamped_data = completed_data._replace(key=self.flow_key)
-                    self.completed_call_setups.append(stamped_data)
+                    self.completed_procedures.append(completed_data._replace(key=self.flow_key))
                 del self.active_call_setups[call_id]
 
-    def get_all_completed_measurements(self) -> list[ProcedureDescription]:
-        return self.completed_call_setups
+    def _process_registration_message(self, call_id: str, message_type: SipMessageType, is_caller: bool, **kwargs):
+        cseq_num = kwargs.get('cseq_number')
+        # A registration transaction is unique by Call-ID and CSeq number
+        reg_key = f"{call_id}_{cseq_num}"
+        measurement = self.active_registrations.get(reg_key)
+        if not measurement and message_type == SipMessageType.REGISTER and is_caller:
+            measurement = SIPRegistrationMeasurement(call_id=call_id, cseq=cseq_num, is_caller=True)
+            # Manually trigger the start event for the new measurement
+            event, counter_name = measurement._get_event_for_message(message_type, kwargs.get('sip_response_code'))
+            measurement.trigger(event, counter_name=counter_name, **kwargs)
+            self.active_registrations[reg_key] = measurement
+            self.registration_success_rate_tracker.record_registration_attempt()
+        # For responses, find the matching registration attempt and process the message
+        elif measurement and not is_caller:
+            measurement.process_sip_message(message_type, is_caller=is_caller, **kwargs)
+        if measurement and measurement.is_measurement_finished():
+            if measurement.success:
+                self.registration_success_rate_tracker.record_registration_success()
+            else:
+                self.registration_success_rate_tracker.record_registration_failure(measurement.termination_reason)
+            if completed_data := measurement.get_measurement():
+                self.completed_procedures.append(completed_data._replace(key=self.flow_key))
+            del self.active_registrations[reg_key]
+
+    def process_sip_message(self, message_type: SipMessageType, **kwargs):
+        """Routes a SIP message to the correct procedure processor."""
+        self.sip_protocol_counters[message_type.value] += 1
+        if code := kwargs.get('sip_response_code'): self.sip_protocol_counters[f"SIP_Response_{code}"] += 1
+
+        cseq_method = (kwargs.get('cseq_method') or "UNKNOWN").upper()
+        if cseq_method in ["INVITE", "ACK", "CANCEL", "BYE"]:
+            self._process_call_message(message_type=message_type, **kwargs)
+        elif cseq_method == "REGISTER":
+            self._process_registration_message(message_type=message_type, **kwargs)
+
+    def get_all_completed_procedures(self) -> list[ProcedureDescription]:
+        return self.completed_procedures
 
     def get_call_success_rate_statistics(self) -> dict:
         return self.call_success_rate_tracker.get_statistics()
+
+    def get_registration_success_rate_statistics(self) -> dict:
+        return self.registration_success_rate_tracker.get_statistics()
 
     def get_protocol_counters(self) -> dict:
         return dict(self.sip_protocol_counters)
@@ -211,12 +344,13 @@ class SIPMeasurementAggregator:
     """
 
     def __init__(self):
-        self.managers: dict[tuple, SIPCallSetupManager] = {}
+        # This now holds SIPFlowManager instances
+        self.managers: dict[tuple, SIPFlowManager] = {}
 
-    def _get_or_create_manager(self, key: tuple) -> SIPCallSetupManager:
+    def _get_or_create_manager(self, key: tuple) -> SIPFlowManager:
         if key not in self.managers:
-            logging.info(f"Creating new SIPCallSetupManager for key: {key}")
-            self.managers[key] = SIPCallSetupManager(flow_key=key)
+            logging.info(f"Creating new SIPFlowManager for key: {key}")
+            self.managers[key] = SIPFlowManager(flow_key=key)
         return self.managers[key]
 
     def _parse_sip_message(self, raw_message: str) -> dict:
@@ -231,9 +365,10 @@ class SIPMeasurementAggregator:
             info['cseq_method'] = cseq_match.group(2).strip()
 
         first_line = raw_message.strip().splitlines()[0]
-        if (req_match := re.match(r"^(INVITE|ACK|BYE|CANCEL|UPDATE)", first_line, re.IGNORECASE)):
-            if hasattr(SipMessageType, (msg_str := req_match.group(1).upper())): info['message_type'] = SipMessageType[
-                msg_str]
+        # Updated regex to include REGISTER
+        if (req_match := re.match(r"^(INVITE|ACK|BYE|CANCEL|UPDATE|REGISTER)", first_line, re.IGNORECASE)):
+            msg_str = req_match.group(1).upper()
+            if hasattr(SipMessageType, msg_str): info['message_type'] = SipMessageType[msg_str]
         elif (resp_match := re.match(r"^SIP/2\.0\s+(\d{3})", first_line)):
             code = int(resp_match.group(1))
             info['sip_response_code'] = code
@@ -255,38 +390,50 @@ class SIPMeasurementAggregator:
 
     def process_message(self, key: tuple, raw_sip_message: str, timestamp: float, frame: int):
         """Processes a raw SIP message for a given flow key."""
-        # Unpack the 6-element key
-        ip_src, port_src, ip_dst, port_dst, transport_protocol, is_caller = key
+        *_, is_caller = key
         manager = self._get_or_create_manager(key)
         parsed_info = self._parse_sip_message(raw_sip_message)
         if not parsed_info.get('call_id') or not parsed_info.get('cseq_number'):
             logging.warning(f"Could not find Call-ID or CSeq for key {key}. Skipping message.");
             return
         manager.process_sip_message(
-            call_id=parsed_info['call_id'], message_type=parsed_info['message_type'],
-            is_caller=is_caller, sip_response_code=parsed_info['sip_response_code'],
-            timestamp=timestamp, frame=frame, date_time=datetime.fromtimestamp(timestamp),
-            cseq_number=parsed_info['cseq_number'], cseq_method=parsed_info['cseq_method'])
+            is_caller=is_caller, timestamp=timestamp, frame=frame, date_time=datetime.fromtimestamp(timestamp),
+            **parsed_info)
 
     def get_all_data(self) -> dict[str, pd.DataFrame]:
         """Aggregates all data and returns it as a dictionary of pandas DataFrames."""
-        all_measurements, all_stats, all_counters = [], [], []
+        all_measurements, all_call_stats, all_reg_stats, all_counters = [], [], [], []
         for key, manager in self.managers.items():
-            all_measurements.extend(manager.get_all_completed_measurements())
-            stats_data = manager.get_call_success_rate_statistics();
-            stats_data['flow_key'] = key;
-            all_stats.append(stats_data)
-            counters_data = manager.get_protocol_counters();
+            all_measurements.extend(manager.get_all_completed_procedures())
+            # Collect call stats
+            call_stats_data = manager.get_call_success_rate_statistics()
+            if call_stats_data.get("Total Calls Attempted", 0) > 0:
+                call_stats_data['flow_key'] = key;
+                all_call_stats.append(call_stats_data)
+            # Collect registration stats
+            reg_stats_data = manager.get_registration_success_rate_statistics()
+            if reg_stats_data.get("Total Registrations Attempted", 0) > 0:
+                reg_stats_data['flow_key'] = key;
+                all_reg_stats.append(reg_stats_data)
+            # Collect protocol counters
+            counters_data = manager.get_protocol_counters()
             counters_data['flow_key'] = key;
             all_counters.append(counters_data)
+
+        # Create DataFrames
         df_measurements = pd.DataFrame(all_measurements) if all_measurements else pd.DataFrame(
             columns=ProcedureDescription._fields)
-        df_stats = pd.DataFrame(all_stats) if all_stats else pd.DataFrame()
+        df_call_stats = pd.DataFrame(all_call_stats) if all_call_stats else pd.DataFrame()
+        df_reg_stats = pd.DataFrame(all_reg_stats) if all_reg_stats else pd.DataFrame()
         df_counters = pd.DataFrame(all_counters).fillna(0).astype(int,
                                                                   errors='ignore') if all_counters else pd.DataFrame()
-        if 'flow_key' in df_stats.columns: df_stats.set_index('flow_key', inplace=True)
-        if 'flow_key' in df_counters.columns: df_counters.set_index('flow_key', inplace=True)
-        return {"measurements": df_measurements, "statistics": df_stats, "counters": df_counters}
+
+        # Set flow_key as index where applicable
+        for df in [df_call_stats, df_reg_stats, df_counters]:
+            if 'flow_key' in df.columns: df.set_index('flow_key', inplace=True)
+
+        return {"measurements": df_measurements, "call_statistics": df_call_stats,
+                "registration_statistics": df_reg_stats, "counters": df_counters}
 
 
 if __name__ == "__main__":
@@ -294,40 +441,51 @@ if __name__ == "__main__":
     pd.set_option('display.width', 1000);
     pd.set_option('display.max_columns', 15)
 
-    logging.info("\n--- Testing SIPMeasurementAggregator with CSeq Tracking ---")
     aggregator = SIPMeasurementAggregator()
-    # Updated flow_key_1 to be a 6-element tuple
     flow_key_1 = ('192.168.1.10', 5060, '10.0.0.2', 5060, 'UDP', True)
 
     # --- Message Templates ---
-    # Note the CSeq in each message
     raw_invite_tpl = "INVITE sip:bob@biloxi.com SIP/2.0\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} INVITE\r\n"
-    raw_update_tpl = "UPDATE sip:bob@biloxi.com SIP/2.0\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} UPDATE\r\n"
     raw_183_tpl = "SIP/2.0 183 Session Progress\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} INVITE\r\n"
-    raw_200ok_update_tpl = "SIP/2.0 200 OK\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} UPDATE\r\n"
     raw_200ok_invite_tpl = "SIP/2.0 200 OK\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} INVITE\r\n"
     raw_ack_tpl = "ACK sip:bob@biloxi.com SIP/2.0\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} ACK\r\n"
+    # New templates for REGISTER
+    raw_register_tpl = "REGISTER sip:registrar.biloxi.com SIP/2.0\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} REGISTER\r\n"
+    raw_200ok_register_tpl = "SIP/2.0 200 OK\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} REGISTER\r\n"
+    raw_401_auth_tpl = "SIP/2.0 401 Unauthorized\r\nCall-ID: {call_id}\r\nCSeq: {cseq_num} REGISTER\r\n"
 
-    # --- Simulation: INVITE with an intervening UPDATE ---
-    # The measurement should ignore the UPDATE and its 200 OK, and correctly use the 183 and final 200 OK for the INVITE.
-    logging.info("\n--- Simulating call with an intervening UPDATE request ---")
+    # --- Simulation ---
     ts = datetime.now().timestamp()
-    call_id = 'cseq-test-call'
-    aggregator.process_message(flow_key_1, raw_invite_tpl.format(call_id=call_id, cseq_num=1), ts, 100)
-    aggregator.process_message(flow_key_1, raw_183_tpl.format(call_id=call_id, cseq_num=1), ts + 0.2, 101)
-    # This UPDATE and its response should be ignored by the INVITE measurement instance
-    aggregator.process_message(flow_key_1, raw_update_tpl.format(call_id=call_id, cseq_num=2), ts + 0.3, 102)
-    aggregator.process_message(flow_key_1, raw_200ok_update_tpl.format(call_id=call_id, cseq_num=2), ts + 0.4, 103)
-    # This is the real end of the INVITE transaction
-    aggregator.process_message(flow_key_1, raw_200ok_invite_tpl.format(call_id=call_id, cseq_num=1), ts + 1.0, 104)
-    aggregator.process_message(flow_key_1, raw_ack_tpl.format(call_id=call_id, cseq_num=1), ts + 1.1, 105)
+
+    # 1. Successful Call
+    logging.info("\n--- Simulating a successful call ---")
+    aggregator.process_message(flow_key_1, raw_invite_tpl.format(call_id='call-1', cseq_num=1), ts, 100)
+    aggregator.process_message(flow_key_1, raw_183_tpl.format(call_id='call-1', cseq_num=1), ts + 0.2, 101)
+    aggregator.process_message(flow_key_1, raw_200ok_invite_tpl.format(call_id='call-1', cseq_num=1), ts + 1.0, 104)
+    aggregator.process_message(flow_key_1, raw_ack_tpl.format(call_id='call-1', cseq_num=1), ts + 1.1, 105)
+
+    # 2. Failed Registration
+    logging.info("\n--- Simulating a failed registration ---")
+    aggregator.process_message(flow_key_1, raw_register_tpl.format(call_id='reg-1', cseq_num=10), ts + 2.0, 200)
+    aggregator.process_message(flow_key_1, raw_401_auth_tpl.format(call_id='reg-1', cseq_num=10), ts + 2.2, 201)
+
+    # 3. Successful Registration
+    logging.info("\n--- Simulating a successful registration ---")
+    aggregator.process_message(flow_key_1, raw_register_tpl.format(call_id='reg-2', cseq_num=11), ts + 3.0, 300)
+    aggregator.process_message(flow_key_1, raw_200ok_register_tpl.format(call_id='reg-2', cseq_num=11), ts + 3.3, 301)
 
     # --- Display Aggregated DataFrame Results ---
     logging.info("\n--- Aggregated DataFrame Results ---")
     dataframes = aggregator.get_all_data()
-    print("\n--- Completed Measurements ---")
+
+    print("\n--- Completed Measurements (Calls and Registrations) ---")
     print(dataframes["measurements"])
+
     print("\n\n--- Call Statistics by Flow ---")
-    print(dataframes["statistics"])
+    print(dataframes["call_statistics"])
+
+    print("\n\n--- Registration Statistics by Flow ---")
+    print(dataframes["registration_statistics"])
+
     print("\n\n--- Protocol Counters by Flow ---")
     print(dataframes["counters"])
