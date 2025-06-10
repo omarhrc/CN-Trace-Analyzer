@@ -78,23 +78,23 @@ class SIPCallSetupMeasurement(ProcedureMeasurement):
                                     start_timestamp=start_ts, end_timestamp=end_ts,
                                     start_datetime=start_dt, end_datetime=end_dt)
 
-    def check_and_trigger(self, event, **kwargs):
-        # This is a simplified state machine trigger for demonstration.
-        # A full implementation would use the transitions table.
-        if event == 'event_invite' and self.state == 'INITIAL':
-            self.state = 'INVITE_SENT';
-            self.start_procedure_measurement(**kwargs)
-        elif event == 'event_provisional' and self.state in ['INVITE_SENT', 'PROCEEDING']:
-            self.state = 'PROCEEDING'
-        elif event == 'event_success_resp' and self.state in ['INVITE_SENT', 'PROCEEDING']:
-            self.state = 'WAITING_FOR_ACK'
-        elif event == 'event_ack' and self.state == 'WAITING_FOR_ACK':
-            self.state = 'SUCCESS';
-            self.end_procedure_measurement(**kwargs)
-        elif event == 'event_failure':
-            self.state = 'FAILED';
-            self.end_procedure_measurement(**kwargs)
+    # ADDED: This method provides the missing state validation logic.
+    def get_valid_sources_for_trigger(self, trigger_name: str) -> list:
+        """Finds all valid source states for a given trigger from the transitions table."""
+        valid_sources = []
+        for transition in self.transitions:
+            if transition['trigger'] == trigger_name:
+                source = transition['source']
+                if source == '*':
+                    # If wildcard, all states are valid sources for this trigger
+                    return self.states
+                if isinstance(source, list):
+                    valid_sources.extend(source)
+                else:
+                    valid_sources.append(source)
+        return valid_sources
 
+    # REFACTORED: This method is now standardized.
     def process_sip_message(self, message_type: SipMessageType, sip_response_code: int = None, cseq_number: int = None,
                             cseq_method: str = None, **kwargs):
         """Processes a SIP message, validating it against the monitored CSeq transaction."""
@@ -108,8 +108,9 @@ class SIPCallSetupMeasurement(ProcedureMeasurement):
                     return
 
         event, counter_name = self._get_event_for_message(message_type, sip_response_code)
-        if event:
-            self.check_and_trigger(event, counter_name=counter_name, **kwargs)
+        # Standardized check before triggering the event
+        if event and self.state in self.get_valid_sources_for_trigger(event):
+            self.trigger(event, counter_name=counter_name, **kwargs)
 
     def _get_event_for_message(self, msg_type: SipMessageType, code: int = None) -> tuple:
         if self.is_caller:
@@ -210,11 +211,27 @@ class SIPRegistrationMeasurement(ProcedureMeasurement):
                                     start_frame=start_frame, end_frame=end_frame, start_timestamp=start_ts,
                                     end_timestamp=end_ts, start_datetime=start_dt, end_datetime=end_dt)
 
+    # ADDED: This method provides the missing state validation logic.
+    def get_valid_sources_for_trigger(self, trigger_name: str) -> list:
+        """Finds all valid source states for a given trigger from the transitions table."""
+        valid_sources = []
+        for transition in self.transitions:
+            if transition['trigger'] == trigger_name:
+                source = transition['source']
+                if source == '*':
+                    return self.states
+                if isinstance(source, list):
+                    valid_sources.extend(source)
+                else:
+                    valid_sources.append(source)
+        return valid_sources
+
     def process_sip_message(self, message_type: SipMessageType, cseq_number: int, cseq_method: str, **kwargs):
         # Only process messages matching the CSeq of the initial REGISTER
         if not (cseq_number == self.monitored_cseq and cseq_method.upper() == self.monitored_method):
             return
         event, counter_name = self._get_event_for_message(message_type, kwargs.get('sip_response_code'))
+        # The original check was correct, it just needed the method to be defined.
         if event and self.state in self.get_valid_sources_for_trigger(event):
             self.trigger(event, counter_name=counter_name, **kwargs)
 
@@ -279,7 +296,7 @@ class SIPFlowManager:
             self.active_call_setups[call_id] = measurement
             self.call_success_rate_tracker.record_call_attempt()
         if measurement:
-            measurement.process_sip_message(message_type, is_caller=is_caller, **kwargs)
+            measurement.process_sip_message(message_type=message_type, is_caller=is_caller, **kwargs)
             if measurement.is_measurement_finished():
                 if measurement.success:
                     self.call_success_rate_tracker.record_call_success()
@@ -298,12 +315,13 @@ class SIPFlowManager:
             measurement = SIPRegistrationMeasurement(call_id=call_id, cseq=cseq_num, is_caller=True)
             # Manually trigger the start event for the new measurement
             event, counter_name = measurement._get_event_for_message(message_type, kwargs.get('sip_response_code'))
-            measurement.trigger(event, counter_name=counter_name, **kwargs)
+            if event and measurement.state in measurement.get_valid_sources_for_trigger(event):
+                measurement.trigger(event, counter_name=counter_name, **kwargs)
             self.active_registrations[reg_key] = measurement
             self.registration_success_rate_tracker.record_registration_attempt()
         # For responses, find the matching registration attempt and process the message
         elif measurement and not is_caller:
-            measurement.process_sip_message(message_type, is_caller=is_caller, **kwargs)
+            measurement.process_sip_message(message_type=message_type, cseq_number=cseq_num, **kwargs)
         if measurement and measurement.is_measurement_finished():
             if measurement.success:
                 self.registration_success_rate_tracker.record_registration_success()
@@ -358,7 +376,7 @@ class SIPMeasurementAggregator:
         info = {'call_id': None, 'message_type': SipMessageType.UNKNOWN, 'sip_response_code': None, 'cseq_number': None,
                 'cseq_method': None}
         if not (
-        call_id_match := re.search(r"^Call-ID:\s*(.*)$", raw_message, re.IGNORECASE | re.MULTILINE)): return info
+        call_id_match := re.search(r'^(?:Call-ID|i):\s*(.*)$', raw_message, re.IGNORECASE | re.MULTILINE)): return info
         info['call_id'] = call_id_match.group(1).strip()
         if (cseq_match := re.search(r"^CSeq:\s*(\d+)\s+(.*)$", raw_message, re.IGNORECASE | re.MULTILINE)):
             info['cseq_number'] = int(cseq_match.group(1))

@@ -10,7 +10,7 @@ from utils.pcaputils import split_pcapng_by_excel_times
 #from trace_plotting import generate_scatterplots_for_wireshark_traces
 from calculate_metrics import create_vectors_from_traces, calculate_procedure_length_eps
 from calculate_metrics import calculate_procedure_length_sip, calculate_procedure_length_diameter, calculate_procedure_length_pfcp
-from calculate_metrics import calculate_procedure_length_gtp
+from calculate_metrics import calculate_procedure_length_gtp, create_feature_vector
 
 import logging
 import re
@@ -18,13 +18,13 @@ import platform
 import os.path
 
 # Wireshark trace with 5GC messages
-#wireshark_trace = '.\\doc\\free5gc.pcap'
+wireshark_trace = '.\\doc\\free5gc.pcap'
 #wireshark_trace = '.\\doc\\volte_calls_2.pcapng'
 #wireshark_trace = '.\\doc\\s1ap_volte.pcapng'
 #wireshark_trace = 'D:\\Temp\\SIP MT offnet.pcap'
 #wireshark_trace = 'D:\\Temp\\registration_open5gs.pcapng'
 #wireshark_trace = '.\\doc\\EPC_dedicated_bearers.pcapng'
-wireshark_trace = '.\\doc\\GTPv2.pcap'
+#wireshark_trace = '.\\doc\\GTPv2.pcap'
 #wireshark_trace = '.\\doc\\GTPv2_update.pcap'
 
 pcapng_input_dir = r'C:\Telstra\CN_Traces\Input\Wireshark_traces'  # e.g., 'C:/Captures' or './captures'
@@ -46,16 +46,18 @@ print(packets_df)
 #feature_vector = create_feature_vector(packets_df)
 #plot_data = generate_scatterplots_for_wireshark_traces(packets_df)
 
+#procedure_5gc_df, procedure_5gc_frames_df =  trace_plotting.calculate_procedure_length(packets_df)
+#print(procedure_5gc_df)
 #procedure_df, procedure_frames_df = calculate_procedure_length_eps(packets_df, logging_level=logging.DEBUG)
 #procedure_df, procedure_frames_df = calculate_procedure_length_sip(packets_df)
-procedure_diam_df, procedure_diam_frames_df = calculate_procedure_length_diameter(packets_df)
-print(procedure_diam_df)
+#procedure_diam_df, procedure_diam_frames_df = calculate_procedure_length_diameter(packets_df)
+#print(procedure_diam_df)
 #procedure_df, procedure_frames_df = calculate_procedure_length_pfcp(packets_df)
-procedure_gtp_df, procedure_gtp_frames_df = calculate_procedure_length_gtp(packets_df)
-print(procedure_gtp_df)
+#procedure_gtp_df, procedure_gtp_frames_df = calculate_procedure_length_gtp(packets_df)
+#print(procedure_gtp_df)
 #print(procedure_df, procedure_frames_df)
 
-# split_pcapng_by_excel_times(pcapng_input_dir, excel_filepath, output_split_dir)
-# result_df = create_vectors_from_traces(output_split_dir)
-# output_file_path = os.path.join(output_split_dir, output_vector_file)
-# result_df.to_excel(output_file_path, sheet_name="vectors", index=False)
+split_pcapng_by_excel_times(pcapng_input_dir, excel_filepath, output_split_dir)
+result_df = create_vectors_from_traces(output_split_dir)
+output_file_path = os.path.join(output_split_dir, output_vector_file)
+result_df.to_excel(output_file_path, sheet_name="vectors", index=False)

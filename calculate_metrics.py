@@ -5,7 +5,7 @@ Created on Wed Jun  4 06:37:07 2025
 @author: omar_
 """
 import pandas as pd
-
+import collections
 import logging
 import os
 import os.path
@@ -28,7 +28,7 @@ application_logger.setLevel(logging.DEBUG)
 debug = False
 
 PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP', 'SDP']
-FEATURE_NAMES = ['tps']
+FEATURE_NAMES = ['tps', 'protocol_duration']
 
 def get_unique_endpoints(packets_df):
     """
@@ -61,6 +61,29 @@ def get_unique_endpoints(packets_df):
     # .shape[0] is a fast way to get the number of rows (the length).
     return endpoints_df.drop_duplicates().shape[0]
 
+def calculate_total_protocol_duration(protocol, procedure_df):
+    if procedure_df is None or len(procedure_df) == 0:
+        return 0
+    match protocol:
+        case 'NGAP' | 'HTTP/2':
+            result = calculate_procedure_length_5GC(procedure_df)
+        case 'S1AP':
+            result = calculate_procedure_length_eps(procedure_df)
+        case 'SIP':
+            result = calculate_procedure_length_sip(procedure_df)
+        case 'PFCP':
+            result = calculate_procedure_length_pfcp(procedure_df)
+        case 'GTP':
+            result = calculate_procedure_length_gtp(procedure_df)
+        case 'Diameter':
+            result = calculate_procedure_length_diameter(procedure_df)
+        case _:
+            print(f'Protocol {protocol} not found')
+            return 0
+    if result is None or len(result) != 2:
+        return 0
+    if isinstance(result[0], pd.DataFrame):
+        return result[0]['length_ms'].sum()
 
 def create_protocol_features(packets_df, protocol, total_duration):
     ''' Calculates features for each protocol '''
@@ -69,8 +92,15 @@ def create_protocol_features(packets_df, protocol, total_duration):
     protocol_packets = packets_df[packets_df['protocol'].str.contains(protocol)]
     # Feature 1 - TPS
     transactions_per_second = len(protocol_packets)/total_duration
+    if protocol == "SDP":
+        return {'SDP_tps': transactions_per_second}
+    # Feature 2 - Protocol duration
+    total_protocol_duration = calculate_total_protocol_duration(protocol, protocol_packets) / 1000
+    if protocol == "SIP":
+        return {'SIP_tps': transactions_per_second,
+                'SIP_PDD': total_protocol_duration}
     protocol_feature_names = [f'{protocol}_{feature}' for feature in FEATURE_NAMES]
-    feature_values = [transactions_per_second]
+    feature_values = [transactions_per_second, total_protocol_duration]
     return dict(zip(protocol_feature_names, feature_values))
 
     
@@ -325,3 +355,175 @@ def calculate_procedure_length_gtp(packets_df, logging_level=logging.INFO):
     dataframes = aggregator.get_all_data()
     logging.debug('Parsed {0} calls'.format(len(dataframes['measurements'])))
     return dataframes['measurements'], procedure_frames
+
+def calculate_procedure_length_5GC(packets_df):
+    procedure_frames = packets_df[
+        ((packets_df['summary'] == 'NAS Registration request (0x41)') & (
+            ~packets_df['msg_description'].str.contains(r'Security mode complete \(0x5e\)'))) |
+        (packets_df['summary'] == 'NAS Registration accept (0x42)') |
+        (packets_df['summary'] == 'NAS Registration reject (0x44)') |
+        (packets_df['summary'] == 'NAS PDU session establishment request (0xc1)') |
+        (packets_df['summary'] == 'NAS PDU session establishment accept (0xc2)') |
+        (packets_df['summary_raw'].str.contains('HTTP/2'))
+        ].copy()
+
+    procedure_frames['AMF-UE-NGAP-ID'] = ''
+    procedure_frames['RAN-UE-NGAP-ID'] = ''
+    procedure_frames['HTTP_STREAM'] = ''
+    procedure_frames['HTTP_PROCEDURE'] = ''
+    procedure_frames['HTTP_TYPE'] = ''
+
+    def get_id(regex, x, find_all=False):
+        try:
+            if not find_all:
+                match = re.search(regex, x)
+                if match is None:
+                    return ''
+                return match.group(1)
+            else:
+                match = list(re.finditer(regex, x))
+                if len(match) == 0:
+                    return ''
+                matches = [e for e in match if e is not None]
+                matches = [e.group(1) for e in matches]
+                matches = '\n'.join(matches)
+            return matches
+        except:
+            return ''
+
+    procedure_frames['AMF-UE-NGAP-ID'] = procedure_frames['msg_description'].apply(
+        lambda x: get_id(r"'AMF-UE-NGAP-ID: ([\d]+)'", x))
+    procedure_frames['RAN-UE-NGAP-ID'] = procedure_frames['msg_description'].apply(
+        lambda x: get_id(r"'RAN-UE-NGAP-ID: ([\d]+)'", x))
+    procedure_frames['HTTP_STREAM'] = procedure_frames['msg_description'].apply(
+        lambda x: get_id(r"HTTP/2 stream: ([\d]+)", x, find_all=True))
+    procedure_frames['HTTP_PROCEDURE'] = procedure_frames['msg_description'].apply(
+        lambda x: get_id(r":path: (.*)", x, find_all=True))
+    procedure_frames['HTTP_TYPE'] = procedure_frames['summary_raw'].apply(
+        lambda x: get_id(r"HTTP/2.*(req|rsp)", x))
+
+    unique_ran_ids = procedure_frames['RAN-UE-NGAP-ID'].unique()
+
+    logging.debug('Found RAN-UE-NGAP-IDs: {0}'.format(len(unique_ran_ids)))
+
+    procedures = []
+    ProcedureDescription = collections.namedtuple(
+        'ProcedureDescription',
+        'name RAN_UE_NGAP_ID length_ms start_frame end_frame start_timestamp end_timestamp start_datetime end_datetime')
+
+    logging.debug('Parsing procedures based on RAN_UE_NGAP_ID')
+
+    def row_to_id(_row, reverse=False, index_for_multi_messages=None):
+        if not reverse:
+            src = _row.ip_src
+            dst = _row.ip_dst
+        else:
+            dst = _row.ip_src
+            src = _row.ip_dst
+        http_stream = _row.HTTP_STREAM
+        if index_for_multi_messages is not None:
+            try:
+                http_stream = _row.HTTP_STREAM.split('\n')[index_for_multi_messages]
+            except:
+                logging.error('Could not extract HTTP_STREAM index {0} from row {1}', index_for_multi_messages, row)
+                pass
+        generated_key = '{0}-{1}-{2}'.format(
+            src,
+            dst,
+            http_stream)
+        return generated_key
+
+    for ran_id in unique_ran_ids:
+        current_reg_start = 0
+        current_reg_start_frame = 0
+        current_reg_start_datetime = ''
+        current_pdu_session_establishment_start = 0
+        current_pdu_session_establishment_start_frame = 0
+        current_pdu_session_establishment_start_datetime = ''
+        rows = procedure_frames[procedure_frames['RAN-UE-NGAP-ID'] == ran_id]
+        current_proc_starts = {}
+
+        # display(rows)
+        for row in rows.itertuples():
+            if row.summary == 'NAS Registration request (0x41)':
+                current_reg_start = row.timestamp
+                current_reg_start_frame = row.frame_number
+                current_reg_start_datetime = row.datetime
+            elif row.summary == 'NAS PDU session establishment request (0xc1)':
+                current_pdu_session_establishment_start = row.timestamp
+                current_pdu_session_establishment_start_frame = row.frame_number
+                current_pdu_session_establishment_start_datetime = row.datetime
+            elif row.HTTP_TYPE == 'req':
+                # Check if this is a multi-messages HTTP/2
+                for idx, summary in enumerate(row.summary.split('\n')):
+                    proc_key = row_to_id(row, index_for_multi_messages=idx)
+                    current_proc_starts[proc_key] = (row.timestamp, row.frame_number, row.datetime, summary)
+                    logging.debug('PUSH: HTTP/2: Frame {0}; HEADER {1}; {2}; HTTP-STREAM {3}; {4}'.format(
+                        row.frame_number,
+                        idx,
+                        summary,
+                        ', '.join(row.HTTP_STREAM.split('\n')),
+                        proc_key))
+            elif row.summary == 'NAS Registration accept (0x42)':
+                procedure_time = (row.timestamp - current_reg_start) * 1000
+                procedures.append(
+                    ProcedureDescription('NAS UE Registration - accept', ran_id,
+                                         procedure_time,
+                                         current_reg_start_frame,
+                                         row.frame_number,
+                                         current_reg_start, row.timestamp,
+                                         current_reg_start_datetime, row.datetime))
+            elif row.summary == 'NAS Registration reject (0x44)':
+                procedure_time = (row.timestamp - current_reg_start) * 1000
+                procedures.append(
+                    ProcedureDescription('NAS UE Registration - reject', ran_id,
+                                         procedure_time,
+                                         current_reg_start_frame,
+                                         row.frame_number,
+                                         current_reg_start, row.timestamp,
+                                         current_reg_start_datetime, row.datetime))
+            elif row.summary == 'NAS PDU session establishment accept (0xc2)':
+                procedure_time = (row.timestamp - current_pdu_session_establishment_start) * 1000
+                procedures.append(ProcedureDescription(
+                    'NAS PDU Session Establishment - accept', ran_id,
+                    procedure_time,
+                    current_pdu_session_establishment_start_frame,
+                    row.frame_number,
+                    current_pdu_session_establishment_start, row.timestamp,
+                    current_pdu_session_establishment_start_datetime, row.datetime))
+            elif row.summary == 'NAS PDU session establishment reject (0xc3)':
+                procedure_time = (row.timestamp - current_pdu_session_establishment_start) * 1000
+                procedures.append(ProcedureDescription(
+                    'NAS PDU Session Establishment - reject', ran_id,
+                    procedure_time,
+                    current_pdu_session_establishment_start_frame,
+                    row.frame_number,
+                    current_pdu_session_establishment_start, row.timestamp,
+                    current_pdu_session_establishment_start_datetime, row.datetime))
+            elif row.HTTP_TYPE == 'rsp':
+                key = row_to_id(row, reverse=True)
+                if key in current_proc_starts:
+                    logging.debug('POP: HTTP/2: Frame {0}; HTTP-STREAM {1}; {2}'.format(
+                        row.frame_number,
+                        row.HTTP_STREAM,
+                        key))
+                    start = current_proc_starts[key]
+                    procedure_time = (row.timestamp - start[0]) * 1000
+                    procedures.append(ProcedureDescription(
+                        'HTTP ' + start[3], ran_id,
+                        procedure_time,
+                        start[1], row.frame_number,
+                        start[0], row.timestamp,
+                        start[2], row.datetime))
+                    current_proc_starts.pop(key)
+                else:
+                    logging.debug('NO-POP: HTTP/2: Frame {0}; HTTP-STREAM {1}; {2}'.format(
+                        row.frame_number,
+                        row.HTTP_STREAM,
+                        proc_key))
+
+    procedure_df = pd.DataFrame(procedures, columns=['name', 'RAN_UE_NGAP_ID', 'length_ms', 'start_frame', 'end_frame',
+                                                     'start_timestamp', 'end_timestamp',
+                                                     'start_datetime', 'end_datetime'])
+
+    return procedure_df, procedure_frames
