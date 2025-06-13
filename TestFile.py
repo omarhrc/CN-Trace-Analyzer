@@ -27,21 +27,27 @@ wireshark_trace = '.\\doc\\free5gc.pcap'
 #wireshark_trace = '.\\doc\\GTPv2.pcap'
 #wireshark_trace = '.\\doc\\GTPv2_update.pcap'
 
-pcapng_input_dir = r'C:\Telstra\CN_Traces\Input\Wireshark_traces'  # e.g., 'C:/Captures' or './captures'
-excel_filepath = r'C:\Telstra\CN_Traces\Input\Drive_CDRs\test_times.xlsx'  # e.g., 'C:/Tests/test_plan.xlsx' or './test_times.xlsx'
-output_split_dir = r'C:\Telstra\CN_Traces\Output' # e.g., 'C:/SplitCaptures' or './split_captures'
+pcapng_input_dir = r'C:\Telstra\CN_Traces\Input\Wireshark_traces\Test1'  # e.g., 'C:/Captures' or './captures'
+pcapng_input_dirs = [r'C:\Telstra\CN_Traces\Input\Wireshark_traces\Test1',
+                     r'C:\Telstra\CN_Traces\Input\Wireshark_traces\Test2']# e.g., 'C:/Captures' or './captures'
+#excel_filepath = r'C:\Telstra\CN_Traces\Input\Drive_CDRs\Test\one_side_timestamps.xlsx'  # e.g., 'C:/Tests/test_plan.xlsx' or './test_times.xlsx'
+excel_filepath = r'C:\Telstra\CN_Traces\Input\Drive_CDRs\Test\two_side_timestamps.xlsx'  # e.g., 'C:/Tests/test_plan.xlsx' or './test_times.xlsx'
+output_split_dir = r'C:\Telstra\CN_Traces\Output\Test1'
+output_split_dirs = [r'C:\Telstra\CN_Traces\Output\Test1',
+                    r'C:\Telstra\CN_Traces\Output\Test2'] # e.g., 'C:/SplitCaptures' or './split_captures'
+test_name = 'interactivity'
 output_vector_file = r'vectors.xlsx'
 
 
-packets_df = import_pcap_as_dataframe(
-    wireshark_trace,
-    http2_ports = "32445,5002,5000,32665,80,32077,5006,8080,3000,8081,29502,37904",
-    wireshark_version = 'OS',
-    platform=platform.system(),
-    logging_level=logging.INFO,
-    remove_pdml=False)
-
-print(packets_df)
+# packets_df = import_pcap_as_dataframe(
+#     wireshark_trace,
+#     http2_ports = "32445,5002,5000,32665,80,32077,5006,8080,3000,8081,29502,37904",
+#     wireshark_version = 'OS',
+#     platform=platform.system(),
+#     logging_level=logging.INFO,
+#     remove_pdml=False)
+#
+# print(packets_df)
 
 #feature_vector = create_feature_vector(packets_df)
 #plot_data = generate_scatterplots_for_wireshark_traces(packets_df)
@@ -57,7 +63,7 @@ print(packets_df)
 #print(procedure_gtp_df)
 #print(procedure_df, procedure_frames_df)
 
-split_pcapng_by_excel_times(pcapng_input_dir, excel_filepath, output_split_dir)
-result_df = create_vectors_from_traces(output_split_dir)
-output_file_path = os.path.join(output_split_dir, output_vector_file)
-result_df.to_excel(output_file_path, sheet_name="vectors", index=False)
+split_pcapng_by_excel_times(pcapng_input_dirs, excel_filepath, output_split_dirs, test_name)
+#result_df = create_vectors_from_traces(output_split_dir)
+#output_file_path = os.path.join(output_split_dir, output_vector_file)
+#result_df.to_excel(output_file_path, sheet_name="vectors", index=False)

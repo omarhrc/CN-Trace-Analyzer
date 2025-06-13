@@ -145,18 +145,18 @@ def process_all_pcap_files():
         merge_input_path = os.path.join(pcapng_input_dir, row.Relative_Dir_Path)
         merge_output_path = os.path.join(merge_input_path, 'Merged')
         merge_pcap_files(merge_input_path,
-                         merge_output_path, 
+                         merge_output_path,
                          output_filename=f"{row.Relative_Dir_Path}_merged.pcapng")
-        
+
         print(f"Splitting: {merge_output_path}")
-        excel_filepath = os.path.join(cdr_excel_dir, row.Timestamp_File)   
+        excel_filepath = os.path.join(cdr_excel_dir, row.Timestamp_File)
         output_split_full_dir = os.path.join(output_split_dir, row.Path_Suffix, row.MSISDN)
-        split_pcapng_by_excel_times(merge_output_path, excel_filepath, output_split_full_dir)
-    
+        split_pcapng_by_excel_times(merge_output_path, excel_filepath, output_split_full_dir, row.Test_Type, row.System)
+
         print(f"Creating vectors for: {row.Relative_Dir_Path}")
         result_df = create_vectors_from_traces(output_split_full_dir)
         output_vector_file_path = os.path.join(output_split_full_dir, row.Vector_File)
-        result_df.to_excel(output_vector_file_path, sheet_name="vectors", index=False)   
+        result_df.to_excel(output_vector_file_path, sheet_name="vectors", index=False)
 
 
 def cleanup_output():
@@ -175,5 +175,5 @@ def cleanup_output():
         print(f"Removing vectors for: {row.Relative_Dir_Path}")
         remove_files_non_recursively(output_split_full_dir, file_extension='.xlsx')   
 
-#process_all_pcap_files()
-cleanup_output()
+process_all_pcap_files()
+#cleanup_output()

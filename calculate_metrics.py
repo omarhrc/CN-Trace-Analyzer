@@ -142,6 +142,11 @@ def create_feature_vector_from_file(file_path):
     if len(packets_df) == 0:
         return None
     vector = create_feature_vector(packets_df)
+    # Updates vector with information from filename itself
+    file_name = os.path.basename(file_path)
+    imsi, test, row_id, *_ = file_name.split('_')
+    vector.update({"IMSI":imsi, "test":test, "RowID":row_id,
+                   "file_path":file_path})
     return vector
     
 
