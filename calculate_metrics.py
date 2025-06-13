@@ -28,7 +28,7 @@ application_logger.setLevel(logging.DEBUG)
 debug = False
 
 PROTOCOLS = ['NGAP', 'HTTP/2', 'PFCP', 'GTP', 'Diameter', 'S1AP', 'SIP', 'SDP']
-FEATURE_NAMES = ['tps', 'protocol_duration']
+FEATURE_NAMES = ['tps', 'time']
 
 def get_unique_endpoints(packets_df):
     """
@@ -59,7 +59,14 @@ def get_unique_endpoints(packets_df):
 
     # 3. Drop duplicates and return the count of the remaining unique rows.
     # .shape[0] is a fast way to get the number of rows (the length).
-    return endpoints_df.drop_duplicates().shape[0]
+    unique_endpoints = endpoints_df.drop_duplicates()
+    unique_string = ','.join(
+        unique_endpoints['ip_addr'] + ':' +
+        unique_endpoints['port'] + ':' +
+        unique_endpoints['transport_protocol']
+    )
+
+    return unique_endpoints.shape[0], unique_string
 
 def calculate_total_protocol_duration(protocol, procedure_df):
     if procedure_df is None or len(procedure_df) == 0:
@@ -99,6 +106,13 @@ def create_protocol_features(packets_df, protocol, total_duration):
     if protocol == "SIP":
         return {'SIP_tps': transactions_per_second,
                 'SIP_PDD': total_protocol_duration}
+    if protocol == "PFCP":
+        unique_enpoints_number, unique_endpoints = get_unique_endpoints(protocol_packets)
+        return {'PFCP_tps': transactions_per_second,
+                'PFCP_time': total_protocol_duration,
+                'PFCP_unique_number': unique_enpoints_number,
+                'PFCP_unique_endpoint': unique_endpoints
+                }
     protocol_feature_names = [f'{protocol}_{feature}' for feature in FEATURE_NAMES]
     feature_values = [transactions_per_second, total_protocol_duration]
     return dict(zip(protocol_feature_names, feature_values))
@@ -110,7 +124,8 @@ def create_feature_vector(packets_df):
     for protocol in PROTOCOLS:
         feature_vector.update(create_protocol_features(packets_df, protocol, total_duration))
     feature_vector.update({"total_duration":total_duration})
-    feature_vector.update({"total_unique_endpoints": get_unique_endpoints(packets_df)})
+    total_unique_endpoints, _ = get_unique_endpoints(packets_df)
+    feature_vector.update({"total_unique_endpoints":total_unique_endpoints})
     return feature_vector
 
 
