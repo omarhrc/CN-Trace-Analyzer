@@ -19,7 +19,7 @@ import os.path
 # Parameters
 #
 ########################################################################
-number_test_db = r'C:\Telstra\CN_Traces\Input\Number_Test_database.xlsx'
+number_test_db = r'C:\Telstra\CN_Traces\Input\Number_Test_database - 1.xlsx'
 pcapng_input_dir = r'C:\Telstra\CN_Traces\Input\Wireshark_traces'  # e.g., 'C:/Captures' or './captures'
 cdr_excel_dir = r'C:\Telstra\CN_Traces\Input\Drive_CDRs'  # e.g., 'C:/Tests/test_plan.xlsx' or './test_times.xlsx'
 output_split_dir = r'C:\Telstra\CN_Traces\Output' # e.g., 'C:/SplitCaptures' or './split_captures'
@@ -144,14 +144,14 @@ def process_all_pcap_files():
         print(f"Merging: {row.Relative_Dir_Path}")
         merge_input_path = os.path.join(pcapng_input_dir, row.Relative_Dir_Path)
         merge_output_path = os.path.join(merge_input_path, 'Merged')
-        merge_pcap_files(merge_input_path,
-                         merge_output_path,
-                         output_filename=f"{row.Relative_Dir_Path}_merged.pcapng")
+        # merge_pcap_files(merge_input_path,
+        #                  merge_output_path,
+        #                  output_filename=f"{row.Relative_Dir_Path}_merged.pcapng")
 
         print(f"Splitting: {merge_output_path}")
         excel_filepath = os.path.join(cdr_excel_dir, row.Timestamp_File)
-        output_split_full_dir = os.path.join(output_split_dir, row.Path_Suffix, row.MSISDN)
-        split_pcapng_by_excel_times(merge_output_path, excel_filepath, output_split_full_dir, row.Test_Type, row.System)
+        output_split_full_dir = os.path.join(output_split_dir, row.Path_Suffix, row.MSISDN, row.Test_Type)
+        # split_pcapng_by_excel_times(merge_output_path, excel_filepath, output_split_full_dir, row.Test_Type, row.System)
 
         print(f"Creating vectors for: {row.Relative_Dir_Path}")
         result_df = create_vectors_from_traces(output_split_full_dir)

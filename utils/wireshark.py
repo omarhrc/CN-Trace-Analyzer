@@ -175,7 +175,8 @@ def call_wireshark_for_one_version(
     # Added disabling name resolution (see #2). Reference: https://tshark.dev/packetcraft/add_context/name_resolution/
     # Added GTPv2 for N26 messages and TCP to filter out spurious TCP retransmissions
     # Added ICMP becauspie it was observed that sometimes PFCP messages are put into the icmp <proto> tag
-    protocols_to_include_in_pdml = 'http2 ngap pfcp gtpv2 tcp diameter radius gtpprime icmp icmpv6 sip sdp s1ap'
+    # protocols_to_include_in_pdml = 'http2 ngap pfcp gtpv2 tcp diameter radius gtpprime icmp icmpv6 sip sdp s1ap'
+    protocols_to_include_in_pdml = 'http2 nas-5gs pfcp gtpv2 tcp diameter radius gtpprime icmp icmpv6 sip sdp s1ap'
     if additional_protocols is not None and additional_protocols != '':
         protocols_to_include_in_pdml += ' ' + additional_protocols
     logging.debug(f'Protocols to include in PDML file: {protocols_to_include_in_pdml}')

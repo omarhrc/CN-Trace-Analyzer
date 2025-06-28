@@ -121,8 +121,9 @@ def create_protocol_features(packets_df, protocol, total_duration):
 def create_feature_vector(packets_df):
     feature_vector = dict()
     total_duration = packets_df['timestamp'].max() - packets_df['timestamp'].min()
-    for protocol in PROTOCOLS:
-        feature_vector.update(create_protocol_features(packets_df, protocol, total_duration))
+    if total_duration > 0:
+        for protocol in PROTOCOLS:
+            feature_vector.update(create_protocol_features(packets_df, protocol, total_duration))
     feature_vector.update({"total_duration":total_duration})
     total_unique_endpoints, _ = get_unique_endpoints(packets_df)
     feature_vector.update({"total_unique_endpoints":total_unique_endpoints})
@@ -139,14 +140,24 @@ def create_feature_vector_from_file(file_path):
         logging_level=logging.INFO,
         remove_pdml=True)
     
-    if len(packets_df) == 0:
-        return None
-    vector = create_feature_vector(packets_df)
+    if packets_df is not None and len(packets_df) > 0:
+        vector = create_feature_vector(packets_df)
+    else:
+        vector = dict()
     # Updates vector with information from filename itself
+    # Regex pattern to capture the three groups:
+    # 1. IMSI: A sequence of digits at the beginning of the string
+    # 2. Test: Characters between the first underscore and "_Row"
+    # 3. Row ID: "Row" followed by digits
+    pattern = r"(\d+)_([a-zA-Z0-9_]+)_(Row\d+)_.*"
     file_name = os.path.basename(file_path)
-    imsi, test, row_id, *_ = file_name.split('_')
-    vector.update({"IMSI":imsi, "test":test, "RowID":row_id,
-                   "file_path":file_path})
+    match = re.match(pattern, file_name)
+    if match:
+        imsi = match.group(1)
+        test = match.group(2)
+        row_id = match.group(3)
+        vector.update({"IMSI":imsi, "test":test, "RowID":row_id,
+                       "file_path":file_path})
     return vector
     
 
@@ -540,8 +551,8 @@ def calculate_procedure_length_5GC(packets_df):
                     logging.debug('NO-POP: HTTP/2: Frame {0}; HTTP-STREAM {1}; {2}'.format(
                         row.frame_number,
                         row.HTTP_STREAM,
-                        proc_key))
-
+#                        proc_key))
+                        ""))
     procedure_df = pd.DataFrame(procedures, columns=['name', 'RAN_UE_NGAP_ID', 'length_ms', 'start_frame', 'end_frame',
                                                      'start_timestamp', 'end_timestamp',
                                                      'start_datetime', 'end_datetime'])

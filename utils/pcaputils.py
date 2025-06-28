@@ -11,11 +11,13 @@ import subprocess
 import os
 import datetime
 import glob
+import shutil
 
-EPSILON_TIME = 1 # Time in seconds
+EPSILON_TIME = 2 # Time in seconds
+TIME_ZONE_CORRECTION = 2 # 2 hours in Amsterdam from UTC
 
 
-def split_pcapng_by_excel_times(pcapng_directory, cdr_excel_file, output_directory, test_name, system):
+def split_pcapng_by_excel_times(pcapng_directory, cdr_excel_file, output_directory, test_name, system, tz_correction=TIME_ZONE_CORRECTION):
     """
     Splits pcapng files based on time ranges specified in an Excel file.
 
@@ -51,6 +53,8 @@ def split_pcapng_by_excel_times(pcapng_directory, cdr_excel_file, output_directo
     # e.g., "YYYY-MM-DD HH:MM:SS" or epoch time.
     # If not, you might need to convert them.
 
+    # Calculate max duration time, in case a row's end time is missing
+    max_duration = (df['end_time'] - df['start_time']).max()
     for index, row in df.iterrows():
         row_id = row['RowID']
         if two_side_CDR_file:
@@ -65,6 +69,7 @@ def split_pcapng_by_excel_times(pcapng_directory, cdr_excel_file, output_directo
             imsi = row['IMSI']
         start_time = row['start_time']
         end_time = row['end_time']
+
 
         for filename in os.listdir(pcapng_directory):
             if ".pcap" in filename:
@@ -86,16 +91,20 @@ def split_pcapng_by_excel_times(pcapng_directory, cdr_excel_file, output_directo
                 # Let's assume your Excel times are directly usable as strings for display filters.
                 # If they are datetime objects from pandas, convert them to string:
 
-                def add_epsilon_time(time_field, epsilon=EPSILON_TIME, forward_time= True):
+                def adjust_time(time_field, epsilon=EPSILON_TIME, forward_time= True,
+                                tz_correction=TIME_ZONE_CORRECTION, default_value=None):
+                    if pd.isna(time_field):
+                        time_field = default_value
                     delta_time = datetime.timedelta(seconds=epsilon)
+                    tz_time = datetime.timedelta(hours=tz_correction)
                     if not forward_time:
                         delta_time = -delta_time
-                    new_date_object = time_field + delta_time
+                    new_date_object = time_field + delta_time + tz_time
                     new_date_string = new_date_object.strftime("%Y-%m-%d %H:%M:%S.%f")
                     return new_date_string
 
-                start_time_str = add_epsilon_time(start_time, forward_time=False)
-                end_time_str = add_epsilon_time(end_time)
+                start_time_str = adjust_time(start_time, forward_time=False)
+                end_time_str = adjust_time(end_time, default_value=(start_time+max_duration))
 
                 # The display filter for time:
                 # 'frame.time >= "2025-06-05 10:00:00" && frame.time <= "2025-06-05 10:05:00"'
@@ -185,4 +194,72 @@ def merge_pcap_files(input_dir, output_dir, output_filename="merged.pcap"):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return False
+
+
+def copy_files_with_pattern(source_folder, destination_folder, pattern):
+    """
+    Recursively searches for files with a given pattern in their filenames
+    within a source folder and its subfolders, and copies them to a single
+    destination folder. Files are renamed if necessary to avoid overwriting.
+
+    Args:
+        source_folder (str): The path to the source folder.
+        destination_folder (str): The path to the destination folder.
+        pattern (str): The pattern to look for in filenames (case-insensitive).
+    """
+
+    # Create the destination folder if it doesn't exist
+    os.makedirs(destination_folder, exist_ok=True)
+
+    copied_files_count = 0
+    overwritten_files_count = 0
+    skipped_files_count = 0
+
+    print(f"Searching for files with pattern '{pattern}' in '{source_folder}'...")
+
+    for root, _, files in os.walk(source_folder):
+        for filename in files:
+            # Check if the pattern is in the filename (case-insensitive)
+            if pattern.lower() in filename.lower():
+                source_path = os.path.join(root, filename)
+                destination_path = os.path.join(destination_folder, filename)
+
+                # Check if the file already exists in the destination
+                if os.path.exists(destination_path):
+                    # If it exists, rename the new file to avoid overwriting
+                    base_name, extension = os.path.splitext(filename)
+                    counter = 1
+                    new_filename = f"{base_name}_{counter}{extension}"
+                    new_destination_path = os.path.join(destination_folder, new_filename)
+
+                    while os.path.exists(new_destination_path):
+                        counter += 1
+                        new_filename = f"{base_name}_{counter}{extension}"
+                        new_destination_path = os.path.join(destination_folder, new_filename)
+
+                    print(f"File '{filename}' already exists in destination. Copying as '{new_filename}'.")
+                    shutil.copy2(source_path, new_destination_path)
+                    overwritten_files_count += 1 # Count as renamed, effectively avoiding overwrite
+                else:
+                    print(f"Copying '{filename}' to '{destination_folder}'...")
+                    shutil.copy2(source_path, destination_path)
+                    copied_files_count += 1
+
+    print("\n--- Copying Summary ---")
+    print(f"Total files copied: {copied_files_count}")
+    print(f"Files renamed to avoid overwrite: {overwritten_files_count}")
+    print(f"Files skipped (due to no pattern match): {skipped_files_count}")
+    print("------------------------")
+    print("Copying process completed.")
+
+# Example Usage (Uncomment and modify as needed to run)
+# if __name__ == "__main__":
+#     # Define your source and destination folders, and the pattern
+#     source_folder = "/path/to/your/source/folder"  # e.g., "C:/Users/YourUser/Documents/MyProject"
+#     destination_folder = "/path/to/your/destination/folder" # e.g., "C:/Users/YourUser/Desktop/CopiedFiles"
+#     file_pattern = "report" # e.g., "document", "image", ".txt"
+
+#     # To run this script, uncomment the lines above, replace the example paths,
+#     # and ensure the folders exist or will be created.
+#     # copy_files_with_pattern(source_folder, destination_folder, file_pattern)
 
