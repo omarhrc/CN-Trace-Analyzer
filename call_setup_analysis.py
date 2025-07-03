@@ -54,7 +54,7 @@ def load_cdr_data(filepath: str) -> Optional[Dict]:
         filepath: The path to the CDR Excel file.
 
     Returns:
-        A dictionary containing CDR entries and the average duration, or None on failure.
+        A dictionary containing CDR entries, the average duration, and the max duration, or None on failure.
     """
     if not filepath or not os.path.exists(filepath):
         print(f"[*] CDR file not provided or not found. Non-SIP traces will be skipped.")
@@ -64,14 +64,8 @@ def load_cdr_data(filepath: str) -> Optional[Dict]:
     try:
         df = pd.read_excel(filepath)
 
-        duration_col_name = "Call Setup Duration"
-        required_cols = ["RowID", "Call Setup Start (Dialing)", duration_col_name]
-
-        legacy_duration_col = "Call Setup Duration (OptionD) [s]"
-        if duration_col_name not in df.columns and legacy_duration_col in df.columns:
-            print(f"[*] Note: Found legacy column name '{legacy_duration_col}'. Using it for this run.")
-            duration_col_name = legacy_duration_col
-            required_cols = ["RowID", "Call Setup Start (Dialing)", legacy_duration_col]
+        duration_col_name = "Call Setup Duration (Alerting) [s]"
+        required_cols = ["RowID", duration_col_name]
 
         if not all(col in df.columns for col in required_cols):
             print(f"[!] Error: CDR file '{filepath}' must contain columns: {required_cols}")
@@ -85,10 +79,16 @@ def load_cdr_data(filepath: str) -> Optional[Dict]:
                 f"[!] Warning: Could not calculate average from '{duration_col_name}'. Non-SIP traces with missing durations will be skipped.")
             average_duration = np.nan
 
+        max_duration_epsilon = df[duration_col_name].max()
+        if pd.isna(max_duration_epsilon):
+            print(f"[!] Warning: Could not calculate max duration from '{duration_col_name}'. Using 0.05s as epsilon.")
+            max_duration_epsilon = 0.050
+
         df[start_col] = pd.to_datetime(df[start_col], errors='coerce')
         df['RowID'] = df['RowID'].astype(str)
 
-        cdr_data = {'__average_duration__': average_duration, 'entries': {}}
+        cdr_data = {'__average_duration__': average_duration, '__max_duration_epsilon__': max_duration_epsilon,
+                    'entries': {}}
 
         for index, row in df.iterrows():
             row_id = row['RowID']
@@ -101,7 +101,8 @@ def load_cdr_data(filepath: str) -> Optional[Dict]:
                     'duration': duration if pd.notna(duration) else np.nan
                 }
 
-        print(f"[*] Loaded {len(cdr_data['entries'])} CDR entries. Average duration: {average_duration:.4f}s")
+        print(
+            f"[*] Loaded {len(cdr_data['entries'])} CDR entries. Average duration: {average_duration:.4f}s. Max duration (epsilon): {max_duration_epsilon:.4f}s")
         return cdr_data
 
     except Exception as e:
@@ -129,9 +130,9 @@ def get_tshark_data(pcap_file: str) -> pd.DataFrame:
         "diameter.applicationId", "diameter.cmd.code", "diameter.Session-Id",
         "diameter.hopbyhopid", "diameter.endtoendid",
         "http2.headers.path", "http2.headers.method", "http2.streamid", "http2.headers.status", "json",
-        "ngap.AMF_UE_NGAP_ID", "ngap.RAN_UE_NGAP_ID",
-        "s1ap.MME_UE_S1AP_ID", "s1ap.ENB_UE_S1AP_ID",
-        "pfcp.seid", "pfcp.seqno", "pfcp.msg_type",  # Corrected PFCP fields
+        "ngap.AMF_UE_NGAP_ID", "ngap.RAN_UE_NGAP_ID", "ngap.procedureCode",
+        "s1ap.MME_UE_S1AP_ID", "s1ap.ENB_UE_S1AP_ID", "s1ap.procedureCode",
+        "pfcp.seid", "pfcp.seqno", "pfcp.msg_type",
         "gtpv2.seq", "gtpv2.message_type", "gtpv2.teid"
     ]
 
@@ -187,7 +188,7 @@ def prepare_dataframe(df: pd.DataFrame, ip_to_specific_name: dict, specific_to_c
     master['app_id'] = pd.to_numeric(master['diameter.applicationId'], errors='coerce')
     master['cmd_code'] = pd.to_numeric(master['diameter.cmd.code'], errors='coerce')
     master['http2.streamid'] = pd.to_numeric(master['http2.streamid'], errors='coerce')
-    master['pfcp.msg_type'] = pd.to_numeric(master['pfcp.msg_type'], errors='coerce')  # Corrected PFCP field
+    master['pfcp.msg_type'] = pd.to_numeric(master['pfcp.msg_type'], errors='coerce')
     master['gtpv2.message_type'] = pd.to_numeric(master['gtpv2.message_type'], errors='coerce')
 
     master['src_ip'] = np.where(master['ip.src'].notna(), master['ip.src'], master['ipv6.src'])
@@ -289,14 +290,15 @@ def analyze_domain_time(domain_df: pd.DataFrame) -> Tuple[float, Dict[str, float
 
     # --- RAN Protocols (NGAP/S1AP) ---
     for proto, id_cols, req_str, res_str in [
-        ('NGAP', ['ngap.AMF_UE_NGAP_ID', 'ngap.RAN_UE_NGAP_ID'], "Request", "Response"),
-        ('S1AP', ['s1ap.MME_UE_S1AP_ID', 's1ap.ENB_UE_S1AP_ID'], "Request", "Response")]:
+        ('NGAP', ['ngap.AMF_UE_NGAP_ID', 'ngap.RAN_UE_NGAP_ID'], "PDUSessionResourceModifyRequest",
+         "PDUSessionResourceModifyResponse"),
+        ('S1AP', ['s1ap.MME_UE_S1AP_ID', 's1ap.ENB_UE_S1AP_ID'], "E-RABSetupRequest", "E-RABSetupResponse")]:
         ran_df = req_res_df[req_res_df['protocol'] == proto].copy()
         if not ran_df.empty:
             ran_df.dropna(subset=id_cols, inplace=True)
             if ran_df.empty: continue
             requests = ran_df[ran_df['info'].str.contains(req_str, na=False)].sort_values('timestamp')
-            responses = ran_df[ran_df['info'].str.contains(res_str, na=False)].sort_values('timestamp')
+            responses = ran_df[ran_df['info'].str.contains(res_str, na=False, regex=True)].sort_values('timestamp')
             if not requests.empty and not responses.empty:
                 unmatched_responses = responses.to_dict('records')
                 for _, request in requests.iterrows():
@@ -426,6 +428,34 @@ def analyze_h2_pcf_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, int]
     return total_time, matched_pairs
 
 
+def analyze_pcf_notification_span(analysis_window_df: pd.DataFrame) -> float:
+    """
+    Calculates the time elapsed between the first and last PCF notification message.
+
+    Args:
+        analysis_window_df: The DataFrame for the analysis window.
+
+    Returns:
+        The time delta in seconds, or 0.0 if not enough messages are found.
+    """
+    h2_df = analysis_window_df[analysis_window_df['protocol'] == 'HTTP2'].copy()
+    h2_df.dropna(subset=['http2.headers.path'], inplace=True)
+    if h2_df.empty: return 0.0
+
+    notification_path = "/notifications/pcf/policycontrol-update/v1/referenceid/"
+    notifications = h2_df[h2_df['http2.headers.path'].str.startswith(notification_path)].sort_values(by='timestamp')
+
+    if len(notifications) < 2:
+        return 0.0
+
+    first_notification_ts = notifications.iloc[0]['timestamp']
+    last_notification_ts = notifications.iloc[-1]['timestamp']
+
+    delta = (last_notification_ts - first_notification_ts).total_seconds()
+
+    return delta
+
+
 def analyze_ngap_radio_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, int]:
     """
     Analyzes NGAP timing by pairing PDUSessionResourceModifyRequest with a
@@ -440,17 +470,15 @@ def analyze_ngap_radio_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, 
     total_time = 0.0
     ngap_df = analysis_window_df[analysis_window_df['protocol'] == 'NGAP'].copy()
 
-    amf_id_col = 'ngap.AMF_UE_NGAP_ID'
-    ran_id_col = 'ngap.RAN_UE_NGAP_ID'
-
-    ngap_df.dropna(subset=[amf_id_col, ran_id_col], inplace=True)
+    id_cols = ['ngap.AMF_UE_NGAP_ID', 'ngap.RAN_UE_NGAP_ID']
+    ngap_df.dropna(subset=id_cols, inplace=True)
     if ngap_df.empty:
         return 0.0, 0
 
     requests = ngap_df[ngap_df['info'].str.contains("PDUSessionResourceModifyRequest", na=False)].sort_values(
-        by='timestamp')
+        'timestamp')
     responses = ngap_df[ngap_df['info'].str.contains("PDUSessionResourceModifyResponse", na=False)].sort_values(
-        by='timestamp')
+        'timestamp')
 
     if requests.empty or responses.empty:
         return 0.0, 0
@@ -461,8 +489,8 @@ def analyze_ngap_radio_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, 
     for idx, request in requests.iterrows():
         for i, response in enumerate(unmatched_responses):
             if response['timestamp'] > request['timestamp'] and \
-                    response[amf_id_col] == request[amf_id_col] and \
-                    response[ran_id_col] == request[ran_id_col]:
+                    response[id_cols[0]] == request[id_cols[0]] and \
+                    response[id_cols[1]] == request[id_cols[1]]:
                 delta = (response['timestamp'] - request['timestamp']).total_seconds()
                 total_time += delta
                 matched_pairs += 1
@@ -486,15 +514,13 @@ def analyze_s1ap_radio_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, 
     total_time = 0.0
     s1ap_df = analysis_window_df[analysis_window_df['protocol'] == 'S1AP'].copy()
 
-    mme_id_col = 's1ap.MME_UE_S1AP_ID'
-    enb_id_col = 's1ap.ENB_UE_S1AP_ID'
-
-    s1ap_df.dropna(subset=[mme_id_col, enb_id_col], inplace=True)
+    id_cols = ['s1ap.MME_UE_S1AP_ID', 's1ap.ENB_UE_S1AP_ID']
+    s1ap_df.dropna(subset=id_cols, inplace=True)
     if s1ap_df.empty:
         return 0.0, 0
 
-    requests = s1ap_df[s1ap_df['info'].str.contains("E-RABSetupRequest", na=False)].sort_values(by='timestamp')
-    responses = s1ap_df[s1ap_df['info'].str.contains("E-RABSetupResponse", na=False)].sort_values(by='timestamp')
+    requests = s1ap_df[s1ap_df['info'].str.contains("E-RABSetupRequest", na=False)].sort_values('timestamp')
+    responses = s1ap_df[s1ap_df['info'].str.contains("E-RABSetupResponse", na=False)].sort_values('timestamp')
 
     if requests.empty or responses.empty:
         return 0.0, 0
@@ -505,8 +531,8 @@ def analyze_s1ap_radio_timing(analysis_window_df: pd.DataFrame) -> Tuple[float, 
     for idx, request in requests.iterrows():
         for i, response in enumerate(unmatched_responses):
             if response['timestamp'] > request['timestamp'] and \
-                    response[mme_id_col] == request[mme_id_col] and \
-                    response[enb_id_col] == request[enb_id_col]:
+                    response[id_cols[0]] == request[id_cols[0]] and \
+                    response[id_cols[1]] == request[id_cols[1]]:
                 delta = (response['timestamp'] - request['timestamp']).total_seconds()
                 total_time += delta
                 matched_pairs += 1
@@ -536,15 +562,20 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
     invite_mask = master_df['info'].str.startswith("Request: INVITE", na=False)
     all_invites = master_df[invite_mask]
 
-    call_setup_time = 0.0
+    call_setup_time = np.nan
     one_way_network_time = 0.0
+    first_message_timestamp = pd.NaT
 
     row_id_match = re.search(r'(Row\d+)', os.path.basename(pcap_file), re.IGNORECASE)
     row_id = row_id_match.group(1) if row_id_match else None
 
+    # Determine epsilon from CDR data if available, otherwise use a default
+    epsilon_s = cdr_data.get('__max_duration_epsilon__', 0.050) if cdr_data else 0.050
+
     if not all_invites.empty:
         print(f"[*] SIP INVITE found. Using SIP messages to define analysis window.")
         start_packet = all_invites.iloc[0]
+        first_message_timestamp = start_packet['timestamp']
         last_invite_packet = all_invites.iloc[-1]
 
         calling_party_ip = start_packet['src_ip']
@@ -564,11 +595,18 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
         end_packet = end_packet_df.iloc[0]
         end_time = end_packet['timestamp']
         call_setup_time = (end_time - start_time).total_seconds()
+
+        analysis_end_time = end_time + pd.Timedelta(seconds=epsilon_s)
         analysis_window_df = master_df[
-            (master_df['timestamp'] >= start_time) & (master_df['timestamp'] <= end_time)].copy()
+            (master_df['timestamp'] >= start_time) & (master_df['timestamp'] <= analysis_end_time)].copy()
 
     else:
         print(f"[*] No SIP INVITE found. Using CDR data to define analysis window.")
+
+        notification_path = "/notifications/pcf/policycontrol-update/v1/referenceid/"
+        notifications = master_df[master_df['http2.headers.path'].str.startswith(notification_path, na=False)]
+        if not notifications.empty:
+            first_message_timestamp = notifications.sort_values(by='timestamp').iloc[0]['timestamp']
 
         if not cdr_data:
             print("[!] No SIP and no CDR data loaded. Cannot define analysis window. Skipping.")
@@ -593,8 +631,10 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
 
         call_setup_time = duration
         end_time = start_time + pd.Timedelta(seconds=duration)
+
+        analysis_end_time = end_time + pd.Timedelta(seconds=epsilon_s)
         analysis_window_df = master_df[
-            (master_df['timestamp'] >= start_time) & (master_df['timestamp'] <= end_time)].copy()
+            (master_df['timestamp'] >= start_time) & (master_df['timestamp'] <= analysis_end_time)].copy()
         one_way_network_time = 0.0
 
     if analysis_window_df.empty:
@@ -628,13 +668,20 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
     # --- Analyze Transaction Timings ---
     total_rx_time = analyze_rx_timing(analysis_window_df)
     total_h2_pcf_time, h2_pairs_found = analyze_h2_pcf_timing(analysis_window_df)
+    pcf_notification_span = analyze_pcf_notification_span(analysis_window_df)
     total_ngap_time, ngap_pairs_found = analyze_ngap_radio_timing(analysis_window_df)
     total_s1ap_time, s1ap_pairs_found = analyze_s1ap_radio_timing(analysis_window_df)
+
+    # --- Protocol Message Counts ---
+    s1ap_count = len(analysis_window_df[analysis_window_df['protocol'] == 'S1AP'])
+    ngap_count = len(analysis_window_df[analysis_window_df['protocol'] == 'NGAP'])
+    pfcp_count = len(analysis_window_df[analysis_window_df['protocol'] == 'PFCP'])
 
     # --- Compile results ---
     file_results = {
         "RowID": row_id,
         "File": os.path.basename(pcap_file),
+        "First message timestamp": first_message_timestamp,
         "Call Setup Time": call_setup_time,
         "One-way network time": one_way_network_time,
         "Max IMS Nodal Time": max_ims_time,
@@ -644,8 +691,12 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
         "Total NGAP Time": total_ngap_time,
         "Total S1AP Time": total_s1ap_time,
         "Total Radio Time": total_ngap_time + total_s1ap_time,
+        "S1AP Message Count": s1ap_count,
+        "NGAP Message Count": ngap_count,
+        "PFCP Message Count": pfcp_count,
         "Total Rx Time": total_rx_time,
         "Total PCF Notification-Policy Time": total_h2_pcf_time,
+        "PCF Notification Span": pcf_notification_span
     }
 
     for node, time in ims_node_contrib.items():
@@ -665,12 +716,14 @@ def process_pcap_file(pcap_file: str, ip_to_specific: dict, specific_to_canonica
     if h2_pairs_found > 0:
         print(f"    Found and timed {h2_pairs_found} unique H2 Notification-Policy pair(s).")
         print(f"    Total PCF Notification-Policy transaction time: {total_h2_pcf_time:.4f}s.")
+    if pcf_notification_span > 0:
+        print(f"    PCF Notification Span (first to last): {pcf_notification_span:.4f}s.")
     if ngap_pairs_found > 0:
         print(f"    Found and timed {ngap_pairs_found} NGAP PDU Session Modify pair(s).")
-        print(f"    Total NGAP transaction time: {total_ngap_time:.4f}s.")
+        print(f"    Total NGAP Time: {total_ngap_time:.4f}s.")
     if s1ap_pairs_found > 0:
         print(f"    Found and timed {s1ap_pairs_found} S1AP E-RAB Setup pair(s).")
-        print(f"    Total S1AP transaction time: {total_s1ap_time:.4f}s.")
+        print(f"    Total S1AP Time: {total_s1ap_time:.4f}s.")
 
     return file_results
 
@@ -723,11 +776,12 @@ def main():
     final_df = pd.DataFrame(all_results)
 
     primary_cols = [
-        "RowID", "File", "Call Setup Time", "One-way network time",
+        "RowID", "File", "First message timestamp", "Call Setup Time", "One-way network time",
         "Max IMS Nodal Time", "Max IMS Node",
         "Max 5GC Nodal Time", "Max 5GC Node",
         "Total Radio Time", "Total NGAP Time", "Total S1AP Time",
-        "Total Rx Time", "Total PCF Notification-Policy Time"
+        "S1AP Message Count", "NGAP Message Count", "PFCP Message Count",
+        "Total Rx Time", "Total PCF Notification-Policy Time", "PCF Notification Span"
     ]
     other_cols = [col for col in final_df.columns if col not in primary_cols]
 
